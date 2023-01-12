@@ -40,7 +40,7 @@ def read_lmdb(lmdb_file, savepath):
         sys.exit(0)
     with lmdb_env.begin(write=False) as txn:
         nSamples = int(txn.get(b'num-samples'))
-        print(nSamples)
+        print(f'Number of samples: {nSamples}')
         for index in range(1, nSamples+1):
             img_HR_key = b'image_hr-%09d' % index 
             img_lr_key = b'image_lr-%09d' % index
@@ -58,6 +58,7 @@ def read_lmdb(lmdb_file, savepath):
             label_key = 'label-%09d' % index
             label = str(txn.get(label_key.encode()))
             # pdb.set_trace()
+    return nSamples
 
 def mdb_to_jpg(savepath, lmdb_file):
     mkdir(savepath)
