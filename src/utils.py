@@ -3,7 +3,8 @@ import PIL
 import numpy as np
 from IPython.display import display
 
-def imshow(a:np.ndarray):
+
+def imshow(a: np.ndarray):
     a = a.clip(0, 255).astype('uint8')
     if a.ndim == 3:
         if a.shape[2] == 4:

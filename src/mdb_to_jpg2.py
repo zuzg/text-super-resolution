@@ -1,12 +1,9 @@
-import lmdb
-import numpy as np
-import cv2
-import pdb
-import six
-from PIL import Image
-# import utilities
 import os
 import sys
+import lmdb
+import six
+from PIL import Image
+
 
 def mkdir(path):
     path = path.strip()
@@ -16,8 +13,8 @@ def mkdir(path):
         os.makedirs(path)
         return True
     else:
-
         return False
+
 
 def buf2PIL(txn, key, type='RGB'):
     imgbuf = txn.get(key)
@@ -27,14 +24,15 @@ def buf2PIL(txn, key, type='RGB'):
     im = Image.open(buf).convert(type)
     return im
 
+
 def read_lmdb(lmdb_file, savepath):
     lmdb_env = lmdb.open(
-            lmdb_file, 
-            max_readers=1,
-            readonly=True,
-            lock=False,
-            readahead=False,
-            meminit=False)
+        lmdb_file,
+        max_readers=1,
+        readonly=True,
+        lock=False,
+        readahead=False,
+        meminit=False)
     if not lmdb_env:
         print('cannot creat lmdb from %s' % (lmdb_file))
         sys.exit(0)
@@ -42,7 +40,7 @@ def read_lmdb(lmdb_file, savepath):
         nSamples = int(txn.get(b'num-samples'))
         print(f'Number of samples: {nSamples}')
         for index in range(1, nSamples+1):
-            img_HR_key = b'image_hr-%09d' % index 
+            img_HR_key = b'image_hr-%09d' % index
             img_lr_key = b'image_lr-%09d' % index
             img_HR = buf2PIL(txn, img_HR_key, 'RGB')
             img_lr = buf2PIL(txn, img_lr_key, 'RGB')
@@ -52,7 +50,7 @@ def read_lmdb(lmdb_file, savepath):
                 img_lr.save(savepath + str(index) + '_img_LR.jpg', quality=95)
             except IOError:
                 print('Corrupted image for %d' % index)
-                return 
+                return
             label_key = b'label-%09d' % index
             word = str(txn.get(label_key).decode())
             label_key = 'label-%09d' % index
@@ -60,15 +58,18 @@ def read_lmdb(lmdb_file, savepath):
             # pdb.set_trace()
     return nSamples
 
+
 def mdb_to_jpg(savepath, lmdb_file):
     mkdir(savepath)
     return read_lmdb(lmdb_file, savepath)
+
 
 def main():
     savepath = '../data/TextZoom/train2_img/'
     mkdir(savepath)
     lmdb_file = '../data/TextZoom/train2'
     read_lmdb(lmdb_file, savepath)
+
 
 if __name__ == '__main__':
     main()
