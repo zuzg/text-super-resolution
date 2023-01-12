@@ -62,7 +62,7 @@ def read_lmdb(lmdb_file, savepath):
 
 def mdb_to_jpg(savepath, lmdb_file):
     mkdir(savepath)
-    read_lmdb(lmdb_file, savepath)
+    return read_lmdb(lmdb_file, savepath)
 
 def main():
     savepath = '../data/TextZoom/train2_img/'
