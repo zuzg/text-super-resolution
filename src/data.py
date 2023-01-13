@@ -7,7 +7,7 @@ def get_data_from_dir(dir_path:str, filenames:list[str], min_height:int=None) ->
 
     for filename in filenames:
         # add an exception in case of no filename file
-        imgLR = cv2.imread(dir_path+filename+'_img_LR.jpg', 1) 
+        imgLR = cv2.imread(dir_path+filename+'_img_LR.jpg', 1)
         imgHR = cv2.imread(dir_path+filename+'_img_HR.jpg', 1)
         if min_height is not None and (imgLR.shape[0] < min_height):
             continue
