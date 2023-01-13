@@ -17,7 +17,7 @@ def get_data_from_dir(dir_path:str, filenames:list[str], min_height:int=None) ->
 
     return images_LR_HR
 
-def show_LR_HR_images(imgLR, imgHR): # move to src/data?
+def show_LR_HR_images(imgLR, imgHR):
     if imgHR.shape == imgLR.shape:
         imshow(cv2.resize(np.concatenate([imgLR, imgHR], 1), None, fx=2, fy=2))
     else:
