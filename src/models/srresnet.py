@@ -139,4 +139,3 @@ class _NetD(nn.Module):
         out = self.fc2(out)
         out = self.sigmoid(out)
         return out.view(-1, 1).squeeze(1)
-    
