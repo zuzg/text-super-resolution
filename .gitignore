@@ -6,6 +6,9 @@ __pycache__/
 # Data
 /data
 
+# Neptune
+.neptune
+
 # C extensions
 *.so
 
