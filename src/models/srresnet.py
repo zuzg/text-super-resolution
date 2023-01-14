@@ -9,8 +9,6 @@ from torch.utils.data import DataLoader
 from torchvision import models
 import torch.optim as optim
 import math
-from src.data import getTextZoomTrainSet
-
 
 class _Residual_Block(nn.Module):
     def __init__(self):
@@ -270,7 +268,7 @@ def sr_resnet_perform_training(train_set = None, batch_size:int=16, epochs:int=5
         VGGmodel = VGGmodel.to(device)
 
     model = _NetG()
-    criterion = nn.MSELoss(reduction='sum')
+    criterion = nn.MSELoss()
     model.to(device)
     criterion.to(device)
 
