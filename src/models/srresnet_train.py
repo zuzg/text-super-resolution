@@ -18,7 +18,7 @@ from src.cfg import read_config
 # from src.data import SRDataset
 
 
-run = neptune.init_run(project="super-girls/Super-Resolution", api_token='eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiJhMDVlMzM3Yi1mMmVkLTQ0NTUtOGNjMy02ZTk5ZmEwMzU0MWUifQ==')
+run = neptune.init_run(project="super-girls/Super-Resolution")
 run["sys/tags"].add(["SRResNet"])
 cfg = read_config("cfg/models/srresnet.yaml")
 run["params"] = cfg
@@ -71,6 +71,10 @@ def sr_resnet_perform_training(train_set=cfg["train_set"], batch_size=cfg["batch
     discriminative_model.to(device)
     content_loss_criterion.to(device)
     adversarial_loss_criterion.to(device)
+
+    generative_model_total_params = sum(p.numel() for p in generative_model.parameters())
+    discriminative_model_total_params = sum(p.numel() for p in discriminative_model.parameters())
+    run["model_params"] = generative_model_total_params + discriminative_model_total_params
 
     # copy weights from a checkpoint (optional)
     # TODO - add discriminator!
@@ -166,12 +170,14 @@ def train(training_data_loader,
         if verbose:
             if vgg_loss:
                 tepoch.set_postfix(content_loss_VGG=content_loss.item(), adversarial_loss=adversarial_loss.item())
-                run["train/content_loss_VGG"].append(content_loss.item())
-                run["train/adversarial_loss"].append(adversarial_loss.item())
+    
             else:
                 tepoch.set_postfix(content_loss_MSE=content_loss.item(), adversarial_loss=adversarial_loss.item())
-                run["train/content_loss_MSE"].append(content_loss.item())
-                run["train/adversarial_loss"].append(adversarial_loss.item())
+    if vgg_loss:
+        run["train/content_loss_VGG"].append(content_loss.item())
+    else:
+        run["train/content_loss_MSE"].append(content_loss.item())
+    run["train/adversarial_loss"].append(adversarial_loss.item())
 
 def save_checkpoint(model, epoch):
     model_out_path = "checkpoint/" + "model_epoch_{}.pth".format(epoch)
