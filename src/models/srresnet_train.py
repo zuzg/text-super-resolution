@@ -2,7 +2,6 @@ import os
 import sys
 if '../' not in sys.path:
     sys.path.append('../')
-from typing import Dict
 import torch
 import torch.nn as nn
 import torch.backends.cudnn as cudnn
@@ -17,8 +16,8 @@ from src.models.srresnet import _NetG, _NetD
 from src.cfg import read_config
 # from src.data import SRDataset
 
-
-run = neptune.init_run(project="super-girls/Super-Resolution")
+api_token = '=='
+run = neptune.init_run(project="super-girls/Super-Resolution", api_token=api_token)
 run["sys/tags"].add(["SRResNet"])
 cfg = read_config("cfg/models/srresnet.yaml")
 run["params"] = cfg
@@ -74,7 +73,7 @@ def sr_resnet_perform_training(train_set=cfg["train_set"], batch_size=cfg["batch
 
     generative_model_total_params = sum(p.numel() for p in generative_model.parameters())
     discriminative_model_total_params = sum(p.numel() for p in discriminative_model.parameters())
-    run["model_params"] = generative_model_total_params + discriminative_model_total_params
+    total_params = generative_model_total_params + discriminative_model_total_params
 
     # copy weights from a checkpoint (optional)
     # TODO - add discriminator!
@@ -98,9 +97,9 @@ def sr_resnet_perform_training(train_set=cfg["train_set"], batch_size=cfg["batch
                 generative_model, discriminative_model, 
                 content_loss_criterion, adversarial_loss_criterion, 
                 epoch, lr, vgg_loss, verbose)
-    if save is not None:
-        save_checkpoint(generative_model, epoch)
     run.stop()
+    if save is not None:
+        save_checkpoint(generative_model, epoch, save, total_params)
 
 
 def train(training_data_loader, 
@@ -179,14 +178,25 @@ def train(training_data_loader,
         run["train/content_loss_MSE"].append(content_loss.item())
     run["train/adversarial_loss"].append(adversarial_loss.item())
 
-def save_checkpoint(model, epoch, save):
-    model_out_path = "checkpoint/" + "model_{}.pth".format(save)
+
+def save_checkpoint(model, epoch, save_name, params):
+    model_out_path = "checkpoint/" + f"model_{save_name}.pth"
     state = {"epoch": epoch ,"model": model}
     if not os.path.exists("checkpoint/"):
         os.makedirs("checkpoint/")
 
     torch.save(state, model_out_path)
-    print("Model saved to {}".format(model_out_path))
+    print(f"Model saved to {model_out_path}")
+
+    # if new_model is not None:
+    #     model = neptune.init_model(key=f"SRRN{save_name}", project="super-girls/Super-Resolution", api_token=api_token)
+    #     model["sys/tags"].add(["SRResNet"])
+    #     model["total_params"] = params
+    #     model_id = model["sys/id"].fetch()
+    model_version = neptune.init_model_version(model="SR-SRRN6", project="super-girls/Super-Resolution", api_token=api_token)
+    model_version["weights"].upload(f"{model_out_path}")
+    # model.stop()
+    model_version.stop()
 
 if __name__ == "__main__":
     sr_resnet_perform_training()
