@@ -117,7 +117,7 @@ class _NetD(nn.Module):
         self.fc1 = nn.Linear(512 * 6 * 6, 1024)
         self.LeakyReLU = nn.LeakyReLU(0.2, inplace=True)
         self.fc2 = nn.Linear(1024, 1)
-        self.sigmoid = nn.Sigmoid()
+        # self.sigmoid = nn.Sigmoid()
 
         # what does it exactly do?
         for m in self.modules():
@@ -141,5 +141,5 @@ class _NetD(nn.Module):
         out = self.LeakyReLU(out)
 
         out = self.fc2(out)
-        out = self.sigmoid(out)
+        # out = self.sigmoid(out) -> not used since we apply BCEWithLogitsLoss
         return out.view(-1, 1).squeeze(1)
