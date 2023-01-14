@@ -26,7 +26,7 @@ run["params"] = cfg
 #TODO - train_set type SRDataset once it is properly preprocessed and added to src.data
 def sr_resnet_perform_training(train_set=cfg["train_set"], batch_size=cfg["batch_size"], epochs=cfg["epochs"],
                     lr=cfg["lr"], step_lr=cfg["step_lr"], threads=cfg["threads"], 
-                    pretrained:str=None, vgg_loss:bool=True, save:bool=False, verbose:bool=True):
+                    pretrained:str=None, vgg_loss:bool=True, save:str=None, verbose:bool=True):
 
     global generative_model, adversarial_model, VGGmodel, step, device
 
@@ -98,8 +98,8 @@ def sr_resnet_perform_training(train_set=cfg["train_set"], batch_size=cfg["batch
                 generative_model, discriminative_model, 
                 content_loss_criterion, adversarial_loss_criterion, 
                 epoch, lr, vgg_loss, verbose)
-        if save and epoch%10==0:
-            save_checkpoint(generative_model, epoch)
+    if save is not None:
+        save_checkpoint(generative_model, epoch)
     run.stop()
 
 
@@ -179,8 +179,8 @@ def train(training_data_loader,
         run["train/content_loss_MSE"].append(content_loss.item())
     run["train/adversarial_loss"].append(adversarial_loss.item())
 
-def save_checkpoint(model, epoch):
-    model_out_path = "checkpoint/" + "model_epoch_{}.pth".format(epoch)
+def save_checkpoint(model, epoch, save):
+    model_out_path = "checkpoint/" + "model_{}.pth".format(save)
     state = {"epoch": epoch ,"model": model}
     if not os.path.exists("checkpoint/"):
         os.makedirs("checkpoint/")
