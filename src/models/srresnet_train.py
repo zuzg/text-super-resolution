@@ -141,7 +141,7 @@ def train(training_data_loader,
 
         # DISCRIMINATOR
         hr_discriminated = discriminative_model(target.float())
-        sr_discriminated = discriminative_model(output)
+        sr_discriminated = discriminative_model(output.detach())
 
         adversarial_loss = adversarial_loss_criterion(sr_discriminated, torch.zeros_like(sr_discriminated)) + \
                            adversarial_loss_criterion(hr_discriminated, torch.ones_like(hr_discriminated))
@@ -153,9 +153,9 @@ def train(training_data_loader,
 
         if verbose:
             if vgg_loss:
-                tepoch.set_postfix(content_loss_VGG=content_loss.item(), adversarial_loss=adversarial_loss)
+                tepoch.set_postfix(content_loss_VGG=content_loss.item(), adversarial_loss=adversarial_loss.item())
             else:
-                tepoch.set_postfix(content_loss_MSE=content_loss.tiem(), adversarial_loss=adversarial_loss)
+                tepoch.set_postfix(content_loss_MSE=content_loss.item(), adversarial_loss=adversarial_loss.item())
 
 def save_checkpoint(model, epoch):
     model_out_path = "checkpoint/" + "model_epoch_{}.pth".format(epoch)
