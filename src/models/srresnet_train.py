@@ -8,8 +8,9 @@ from torchvision import models
 import torch.optim as optim
 from tqdm import tqdm
 from src.models.srresnet import _NetG, _NetD
+# from src.data import SRDataset
 
-#TODO - train_set type
+#TODO - train_set type SRDataset once it is properly preprocessed and added to src.data
 def sr_resnet_perform_training(train_set = None, batch_size:int=16, epochs:int=500,
                     lr:float=1e-4, step_lr:int=200, threads:int=0, 
                     pretrained:str=None, vgg_loss:bool=True, save:bool=False, verbose:bool=True):
@@ -74,7 +75,6 @@ def sr_resnet_perform_training(train_set = None, batch_size:int=16, epochs:int=5
     optimizer_g = optim.Adam(generative_model.parameters(), lr=lr)
     optimizer_d = optim.Adam(discriminative_model.parameters(), lr=lr)
 
-
     print("===> Training")
     for epoch in range(1, epochs + 1):
         train(training_data_loader, 
@@ -93,7 +93,6 @@ def train(training_data_loader,
             epoch, lr, vgg_loss, verbose):
 
     lr = lr * (0.1 ** (epoch // step))
-
     # UPDATE LEARNING RATE
     for param_group in optimizer_g.param_groups:
         param_group["lr"] = lr
@@ -112,7 +111,7 @@ def train(training_data_loader,
         if verbose:
                 tepoch.set_description(f"Epoch {epoch}")
 
-        # print('Shapes: ',, input.shape, target.shape)
+        # print('Shapes: ', input.shape, target.shape)
         input.requires_grad = True
         target.requires_grad = False
    

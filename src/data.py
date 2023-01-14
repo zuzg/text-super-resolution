@@ -2,10 +2,37 @@ import cv2
 import numpy as np
 from src.utils import imshow
 import matplotlib.pyplot as plt
+import torch
+from torch.utils.data import Dataset
+
+# TODO replace this with final one
+class SRDataset(Dataset):
+    def __init__(self, images, crop_size=None, normalize=True): 
+        self.normalize = normalize
+        self.crop_size = crop_size
+        self.images = images
+
+    def __len__(self):
+        return len(self.images)
+
+    def preprocess_image(self, image):
+        if self.crop_size is not None:
+            hr_cropped = cv2.resize(image[0], self.crop_size)
+            lr_cropped = cv2.resize(image[1], (24, 24))
+        # TODO patching?
+        if self.normalize:
+            lr_norm = lr_cropped / 255
+            hr_norm = hr_cropped / 255 # [0, 1]
+
+            return torch.tensor(lr_norm).swapaxes(1,2).swapaxes(0,1), torch.tensor(hr_norm).swapaxes(1,2).swapaxes(0,1)
+        return torch.tensor(image[0]).swapaxes(1,2).swapaxes(0,1), torch.tensor(image[1]).swapaxes(1,2).swapaxes(0,1)
+
+    def __getitem__(self, index):        
+        image = self.images[index]         
+        return self.preprocess_image(image)
+
 
 # NOTE: we assume _img_HR.jpg and _img_HR.jpg suffices
-
-
 def get_data_from_dir(dir_path: str, filenames: list[str], min_height: int = None) -> tuple[list[np.ndarray]]:
     images_LR_HR = list()
 
