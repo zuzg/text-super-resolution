@@ -139,3 +139,83 @@ class _NetD(nn.Module):
         out = self.fc2(out)
         out = self.sigmoid(out)
         return out.view(-1, 1).squeeze(1)
+
+
+# COMPARED TO THE PAPER - for some reason sometimes the kernel size was set to 4 
+# but in the paper all kernel_size = 3 so I changed that
+class _NetD2(nn.Module):
+    def __init__(self):
+        super(_NetD2, self).__init__()
+
+        self.features = nn.Sequential(
+        
+            # input is (3) x 96 x 96
+            nn.Conv2d(in_channels=3, out_channels=64, kernel_size=3, stride=1, bias=False),
+            nn.LeakyReLU(0.2, inplace=True),
+
+            # state size. (64) x 96 x 96
+            nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=2, padding=1, bias=False),            
+            nn.BatchNorm2d(64),
+            nn.LeakyReLU(0.2, inplace=True),
+
+            # state size. (64) x 96 x 96
+            nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3, stride=1, padding=1, bias=False),            
+            nn.BatchNorm2d(128),
+            nn.LeakyReLU(0.2, inplace=True),
+            
+            # state size. (64) x 48 x 48
+            nn.Conv2d(in_channels=128, out_channels=128, kernel_size=3, stride=2, padding=1, bias=False),
+            nn.BatchNorm2d(128),
+            nn.LeakyReLU(0.2, inplace=True),
+
+            # state size. (128) x 48 x 48
+            nn.Conv2d(in_channels=128, out_channels=256, kernel_size=3, stride=1, padding=1, bias=False),
+            nn.BatchNorm2d(256),
+            nn.LeakyReLU(0.2, inplace=True),
+
+            # state size. (256) x 24 x 24
+            nn.Conv2d(in_channels=256, out_channels=256, kernel_size=3, stride=2, padding=1, bias=False),
+            nn.BatchNorm2d(256),
+            nn.LeakyReLU(0.2, inplace=True),
+
+            # state size. (256) x 12 x 12
+            nn.Conv2d(in_channels=256, out_channels=512, kernel_size=3, stride=1, padding=1, bias=False),            
+            nn.BatchNorm2d(512),
+            nn.LeakyReLU(0.2, inplace=True),
+
+            # state size. (512) x 12 x 12
+            nn.Conv2d(in_channels=512, out_channels=512, kernel_size=3, stride=2, padding=1, bias=False),            
+            nn.BatchNorm2d(512),
+            nn.LeakyReLU(0.2, inplace=True),
+        )
+
+
+        self.fc1 = nn.Linear(512 * 6 * 6, 1024)
+        self.LeakyReLU = nn.LeakyReLU(0.2, inplace=True)
+        self.fc2 = nn.Linear(1024, 1)
+        self.sigmoid = nn.Sigmoid()
+
+        # what does it exactly do?
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                m.weight.data.normal_(0.0, 0.02)
+            elif isinstance(m, nn.BatchNorm2d):
+                m.weight.data.normal_(1.0, 0.02)
+                m.bias.data.fill_(0)
+
+    def forward(self, input):
+
+        out = self.features(input)
+
+        # state size. (512) x 6 x 6
+        out = out.view(out.size(0), -1)
+
+        # state size. (512 x 6 x 6)
+        out = self.fc1(out)
+
+        # state size. (1024)
+        out = self.LeakyReLU(out)
+
+        out = self.fc2(out)
+        out = self.sigmoid(out)
+        return out.view(-1, 1).squeeze(1)
