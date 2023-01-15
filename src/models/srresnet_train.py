@@ -28,7 +28,7 @@ def sr_resnet_perform_training(train_set, cfg:dict, pretrained:str=None, vgg_los
     step_lr = cfg["step_lr"]
     threads = cfg["threads"]
 
-    global generative_model, adversarial_model, VGGmodel, step, device, run, NEPTUNE
+    global generative_model, adversarial_model, VGGmodel, step, device, run, NEPTUNE, api_token
     NEPTUNE = run_neptune
     
     if NEPTUNE:
