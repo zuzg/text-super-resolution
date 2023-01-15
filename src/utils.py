@@ -14,7 +14,9 @@ def imshow(a: np.ndarray):
     display(PIL.Image.fromarray(a))
 
 
-def display_img_tensor(img):
+def display_img_tensor(img, rescale=False):
+    if rescale:
+        img = img.add(1).div(2)
     images_np  = img.cpu().numpy()
     img_plt = images_np.transpose(1,2,0)
     # print(img_plt.shape)

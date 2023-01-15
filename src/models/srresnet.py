@@ -53,20 +53,20 @@ class _NetG(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x):
-        print(x.shape)
+        # print(x.shape)
         out = self.relu(self.conv_input(x))
-        print(out.shape)
+        # print(out.shape)
         residual = out
         out = self.residual(out)
-        print(out.shape)
+        # print(out.shape)
         out = self.bn_mid(self.conv_mid(out))
-        print(out.shape)
+        # print(out.shape)
         out = torch.add(out,residual)
-        print(out.shape)
+        # print(out.shape)
         out = self.upscale4x(out)
-        print(out.shape)
+        # print(out.shape)
         out = self.conv_output(out)
-        print(out.shape)
+        # print(out.shape)
         return out
 
 # COMPARED TO THE PAPER - for some reason sometimes the kernel size was set to 4 
@@ -132,22 +132,22 @@ class _NetD(nn.Module):
                 m.bias.data.fill_(0)
 
     def forward(self, input):
-        print(input.shape)
+        # print(input.shape)
         out = self.features(input)
-        print(out.shape)
+        # print(out.shape)
         # state size. (512) x 6 x 6
         out = out.view(out.size(0), -1)
-        print(out.shape)
+        # print(out.shape)
         # state size. (512 x 6 x 6)
         out = self.fc1(out)
-        print(out.shape)
+        # print(out.shape)
         # state size. (1024)
         out = self.LeakyReLU(out)
-        print(out.shape)
+        # print(out.shape)
         out = self.fc2(out)
-        print(out.shape)
+        # print(out.shape)
         out = self.sigmoid(out)
-        print(out.shape)
+        # print(out.shape)
         out.view(-1, 1).squeeze(1)
-        print(out.shape)
+        # print(out.shape)
         return out

@@ -64,6 +64,7 @@ def sr_resnet_perform_training(train_set, cfg:dict, pretrained:str=None, vgg_los
                 out = self.feature(x)
                 return out
         VGGmodel = _content_model()
+        VGGmodel.eval()
         VGGmodel = VGGmodel.to(device)
     else:
         print("===> Runs without VGG (MSE loss applied)")
@@ -150,12 +151,12 @@ def train(training_data_loader,
             content_loss = content_loss_criterion(content_input, content_target)
         else:
             content_loss = content_loss_criterion(output.float(), target.float())
-        print('GENERATOR')
+        # print('GENERATOR')
         sr_discriminated = discriminative_model(output)
         adversarial_loss = adversarial_loss_criterion(sr_discriminated, torch.ones_like(sr_discriminated))
         perceptual_loss = content_loss + 1e-3 * adversarial_loss # coefficient to weight the adversarial loss in the perceptual loss
-        print('sr_discriminated', sr_discriminated)
-        print('adversarial_loss',adversarial_loss.item())
+        # print('sr_discriminated', sr_discriminated)
+        # print('adversarial_loss',adversarial_loss.item())
 
         # optimize generator
         optimizer_g.zero_grad()
@@ -167,14 +168,14 @@ def train(training_data_loader,
         # DISCRIMINATOR
         hr_discriminated = discriminative_model(target.float())
         sr_discriminated = discriminative_model(output.detach())
-        print('DISCRIMINATOR')
-        print('hr_discriminated', hr_discriminated)
-        print('sr_discriminated', sr_discriminated)
+        # print('DISCRIMINATOR')
+        # print('hr_discriminated', hr_discriminated)
+        # print('sr_discriminated', sr_discriminated)
 
         adversarial_loss = adversarial_loss_criterion(sr_discriminated, torch.zeros_like(sr_discriminated)) + \
                            adversarial_loss_criterion(hr_discriminated, torch.ones_like(hr_discriminated))
 
-        print('adversarial_loss',adversarial_loss.item())
+        # print('adversarial_loss',adversarial_loss.item())
         # optimize discriminator
         optimizer_d.zero_grad()
         adversarial_loss.backward()
