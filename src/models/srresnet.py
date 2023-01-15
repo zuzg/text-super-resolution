@@ -121,7 +121,7 @@ class _NetD(nn.Module):
         self.fc1 = nn.Linear(512 * 2 * 8, 1024)
         self.LeakyReLU = nn.LeakyReLU(0.2, inplace=True)
         self.fc2 = nn.Linear(1024, 1)
-        self.sigmoid = nn.Sigmoid()
+        # self.sigmoid = nn.Sigmoid()
 
         # what does it exactly do?
         for m in self.modules():
@@ -146,7 +146,7 @@ class _NetD(nn.Module):
         # print(out.shape)
         out = self.fc2(out)
         # print(out.shape)
-        out = self.sigmoid(out)
+        # out = self.sigmoid(out)
         # print(out.shape)
         out.view(-1, 1).squeeze(1)
         # print(out.shape)

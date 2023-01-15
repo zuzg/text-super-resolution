@@ -19,7 +19,7 @@ from src.cfg import read_config
 
 
 #TODO - train_set type SRDataset once it is properly preprocessed and added to src.data
-def sr_resnet_perform_training(train_set, cfg:dict, pretrained:str=None, vgg_loss:bool=True, run_neptune:bool=True, save:str=None, verbose:bool=True):
+def sr_gan_perform_training(train_set, cfg:dict, pretrained:str=None, vgg_loss:bool=True, run_neptune:bool=True, save:str=None, verbose:bool=True):
 
     # read config parameters
     batch_size = cfg["batch_size"]
@@ -34,7 +34,7 @@ def sr_resnet_perform_training(train_set, cfg:dict, pretrained:str=None, vgg_los
     if NEPTUNE:
         api_token = read_config("cfg/tokens/api_token.yaml")["token"]
         run = neptune.init_run(project="super-girls/Super-Resolution", api_token=api_token)
-        run["sys/tags"].add(["SRResNet"])
+        run["sys/tags"].add(["SRGAN"])
         run["params"] = cfg
 
     step=step_lr
@@ -65,20 +65,24 @@ def sr_resnet_perform_training(train_set, cfg:dict, pretrained:str=None, vgg_los
                 out = self.feature(x)
                 return out
         VGGmodel = _content_model()
-        # VGGmodel.eval()
+        VGGmodel.eval()
         VGGmodel = VGGmodel.to(device)
     else:
         print("===> Runs without VGG (MSE loss applied)")
 
     generative_model = _NetG()
+    discriminative_model = _NetD()
     content_loss_criterion = nn.MSELoss()
-    # content_loss_criterion = nn.MSELoss(reduction='none')
+    adversarial_loss_criterion = nn.BCEWithLogitsLoss()
 
     generative_model.to(device)
+    discriminative_model.to(device)
     content_loss_criterion.to(device)
+    adversarial_loss_criterion.to(device)
 
     generative_model_total_params = sum(p.numel() for p in generative_model.parameters())
-    total_params = generative_model_total_params
+    discriminative_model_total_params = sum(p.numel() for p in discriminative_model.parameters())
+    total_params = generative_model_total_params + discriminative_model_total_params
 
     # copy weights from a checkpoint (optional) TODO - add discriminator
     if pretrained:
@@ -92,12 +96,14 @@ def sr_resnet_perform_training(train_set, cfg:dict, pretrained:str=None, vgg_los
 
     print("===> Setting Optimizers")
     optimizer_g = optim.Adam(generative_model.parameters(), lr=lr)
+    optimizer_d = optim.Adam(discriminative_model.parameters(), lr=lr)
 
     print("===> Training")
     for epoch in range(1, epochs + 1):
         train(training_data_loader, 
-                optimizer_g,
-                content_loss_criterion,
+                optimizer_g, optimizer_d, 
+                # generative_model, discriminative_model, 
+                content_loss_criterion, adversarial_loss_criterion, 
                 epoch, lr, vgg_loss, verbose)
     if NEPTUNE:
         run.stop()
@@ -106,16 +112,20 @@ def sr_resnet_perform_training(train_set, cfg:dict, pretrained:str=None, vgg_los
 
 
 def train(training_data_loader, 
-                optimizer_g,
-                content_loss_criterion,
-                epoch, lr, vgg_loss, verbose):
+            optimizer_g, optimizer_d, 
+            # generative_model, discriminative_model, 
+            content_loss_criterion, adversarial_loss_criterion,
+            epoch, lr, vgg_loss, verbose):
 
     lr = lr * (0.1 ** (epoch // step))
     # UPDATE LEARNING RATE
     for param_group in optimizer_g.param_groups:
         param_group["lr"] = lr
+    for param_group in optimizer_d.param_groups:
+        param_group["lr"] = lr
 
     generative_model.train()
+    discriminative_model.train()
 
     if verbose:
         tepoch = tqdm(training_data_loader, unit="batch")
@@ -126,6 +136,7 @@ def train(training_data_loader,
         if verbose:
                 tepoch.set_description(f"Epoch {epoch}")
 
+        # print('Shapes: ', input.shape, target.shape)
         input.requires_grad = True
         target.requires_grad = False
    
@@ -133,34 +144,65 @@ def train(training_data_loader,
 
         # GENERATOR
         output = generative_model(input.float())
-        loss = content_loss_criterion(output.float(), target.float())
 
         if vgg_loss:
             content_input = VGGmodel(output.float())
             content_target = VGGmodel(target.float()).detach()
             content_loss = content_loss_criterion(content_input, content_target)
+        else:
+            content_loss = content_loss_criterion(output.float(), target.float())
+        # print('GENERATOR')
+        # print('content_loss', content_loss)
+        sr_discriminated = discriminative_model(output)
+        adversarial_loss = adversarial_loss_criterion(sr_discriminated, torch.ones_like(sr_discriminated))
+        perceptual_loss = content_loss + beta * adversarial_loss # beta coefficient to weight the adversarial loss in the perceptual loss
+        # print('sr_discriminated', sr_discriminated)
+        # print('adversarial_loss',adversarial_loss.item())
+        # print('-----------------------------------')
 
         # optimize generator
         optimizer_g.zero_grad()
         if vgg_loss:
             VGGmodel.zero_grad()
-            content_loss.backward(retain_graph=True)
-
-        loss.backward()
+        perceptual_loss.backward()
         optimizer_g.step()
+
+        # DISCRIMINATOR
+        hr_discriminated = discriminative_model(target.float())
+        sr_discriminated = discriminative_model(output.detach())
+        # print('DISCRIMINATOR')
+        # print('hr_discriminated', hr_discriminated)
+        # print('sr_discriminated', sr_discriminated)
+
+        # print('discriminator losses')
+        sr_predictions = adversarial_loss_criterion(sr_discriminated, torch.zeros_like(sr_discriminated))
+        hr_predictions = adversarial_loss_criterion(hr_discriminated, torch.ones_like(hr_discriminated))
+        # print('sr_predictions', sr_predictions.item())
+        # print('hr_predictions', hr_predictions.item())
+
+        adversarial_loss = sr_predictions + hr_predictions
+
+        # print('adversarial_loss',adversarial_loss.item())
+        # optimize discriminator
+        optimizer_d.zero_grad()
+        adversarial_loss.backward()
+        optimizer_d.step()
 
         if verbose:
             if vgg_loss:
-                tepoch.set_postfix(MSE_loss=loss.item(), VGG_loss=content_loss.item())
+                tepoch.set_postfix(content_loss_VGG=content_loss.item(), adversarial_loss=adversarial_loss.item(), perceptual_loss=perceptual_loss.item())
     
             else:
-                tepoch.set_postfix(MSE_loss=loss.item())
+                tepoch.set_postfix(content_loss_MSE=content_loss.item(), adversarial_loss=adversarial_loss.item(), perceptual_loss=perceptual_loss.item())
     if vgg_loss and NEPTUNE:
-        run["train/VGG_loss"].append(content_loss.item())
-        run["train/MSE_loss"].append(loss.item())
-
+        run["train/content_loss_VGG"].append(content_loss.item())
+        run["train/adversarial_loss"].append(adversarial_loss.item())
+        run["train/perceptual_loss"].append(perceptual_loss.item())
     elif NEPTUNE:
-        run["train/MSE_loss"].append(loss.item())
+        run["train/content_loss_MSE"].append(content_loss.item())
+        run["train/adversarial_loss"].append(adversarial_loss.item())
+        run["train/perceptual_loss"].append(perceptual_loss.item())
+
 
 def save_checkpoint(model, epoch, save_name, params):
     model_out_path = "checkpoint/" + f"model_{save_name}.pth"
@@ -183,4 +225,4 @@ def save_checkpoint(model, epoch, save_name, params):
         model_version.stop()
 
 if __name__ == "__main__":
-    sr_resnet_perform_training()
+    sr_gan_perform_training()
