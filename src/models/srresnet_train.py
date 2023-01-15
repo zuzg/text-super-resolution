@@ -16,18 +16,26 @@ from src.models.srresnet import _NetG, _NetD
 from src.cfg import read_config
 # from src.data import SRDataset
 
-api_token = '=='
-run = neptune.init_run(project="super-girls/Super-Resolution", api_token=api_token)
-run["sys/tags"].add(["SRResNet"])
-cfg = read_config("cfg/models/srresnet.yaml")
-run["params"] = cfg
+
 
 #TODO - train_set type SRDataset once it is properly preprocessed and added to src.data
-def sr_resnet_perform_training(train_set=cfg["train_set"], batch_size=cfg["batch_size"], epochs=cfg["epochs"],
-                    lr=cfg["lr"], step_lr=cfg["step_lr"], threads=cfg["threads"], 
-                    pretrained:str=None, vgg_loss:bool=True, save:str=None, verbose:bool=True):
+def sr_resnet_perform_training(train_set, cfg:dict, pretrained:str=None, vgg_loss:bool=True, run_neptune:bool=True, save:str=None, verbose:bool=True):
 
-    global generative_model, adversarial_model, VGGmodel, step, device
+    # read config parameters
+    batch_size = cfg["batch_size"]
+    epochs = cfg["epochs"]
+    lr = cfg["lr"]
+    step_lr = cfg["step_lr"]
+    threads = cfg["threads"]
+
+    global generative_model, adversarial_model, VGGmodel, step, device, run, NEPTUNE
+    NEPTUNE = run_neptune
+    
+    if NEPTUNE:
+        api_token = read_config("cfg/tokens/api_token.yaml")["token"]
+        run = neptune.init_run(project="super-girls/Super-Resolution", api_token=api_token)
+        run["sys/tags"].add(["SRResNet"])
+        run["params"] = cfg
 
     step=step_lr
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
@@ -97,7 +105,8 @@ def sr_resnet_perform_training(train_set=cfg["train_set"], batch_size=cfg["batch
                 generative_model, discriminative_model, 
                 content_loss_criterion, adversarial_loss_criterion, 
                 epoch, lr, vgg_loss, verbose)
-    run.stop()
+    if NEPTUNE:
+        run.stop()
     if save is not None:
         save_checkpoint(generative_model, epoch, save, total_params)
 
@@ -172,11 +181,12 @@ def train(training_data_loader,
     
             else:
                 tepoch.set_postfix(content_loss_MSE=content_loss.item(), adversarial_loss=adversarial_loss.item())
-    if vgg_loss:
+    if vgg_loss and NEPTUNE:
         run["train/content_loss_VGG"].append(content_loss.item())
-    else:
+        run["train/adversarial_loss"].append(adversarial_loss.item())
+    elif NEPTUNE:
         run["train/content_loss_MSE"].append(content_loss.item())
-    run["train/adversarial_loss"].append(adversarial_loss.item())
+        run["train/adversarial_loss"].append(adversarial_loss.item())
 
 
 def save_checkpoint(model, epoch, save_name, params):
@@ -193,10 +203,11 @@ def save_checkpoint(model, epoch, save_name, params):
     #     model["sys/tags"].add(["SRResNet"])
     #     model["total_params"] = params
     #     model_id = model["sys/id"].fetch()
-    model_version = neptune.init_model_version(model="SR-SRRN6", project="super-girls/Super-Resolution", api_token=api_token)
-    model_version["weights"].upload(f"{model_out_path}")
-    # model.stop()
-    model_version.stop()
+    if NEPTUNE:
+        model_version = neptune.init_model_version(model="SR-SRRN6", project="super-girls/Super-Resolution", api_token=api_token)
+        model_version["weights"].upload(f"{model_out_path}")
+        # model.stop()
+        model_version.stop()
 
 if __name__ == "__main__":
     sr_resnet_perform_training()
