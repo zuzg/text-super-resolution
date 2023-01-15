@@ -44,8 +44,7 @@ def sr_resnet_perform_training(train_set, cfg:dict, pretrained:str=None, vgg_los
     torch.manual_seed(seed)
     if cuda:
         torch.cuda.manual_seed(seed)
-    # Enable the inbuilt cudnn auto-tuner -> faster runtime
-    cudnn.benchmark = True
+    cudnn.benchmark = True     # Enable the inbuilt cudnn auto-tuner -> faster runtime
 
     if train_set is None:
         print("No training set provided!")
@@ -73,6 +72,7 @@ def sr_resnet_perform_training(train_set, cfg:dict, pretrained:str=None, vgg_los
     discriminative_model = _NetD()
     content_loss_criterion = nn.MSELoss()
     adversarial_loss_criterion = nn.BCEWithLogitsLoss()
+    # adversarial_loss_criterion = nn.BCEWithLogitsLoss(reduction='sum')
 
     generative_model.to(device)
     discriminative_model.to(device)
@@ -83,8 +83,7 @@ def sr_resnet_perform_training(train_set, cfg:dict, pretrained:str=None, vgg_los
     discriminative_model_total_params = sum(p.numel() for p in discriminative_model.parameters())
     total_params = generative_model_total_params + discriminative_model_total_params
 
-    # copy weights from a checkpoint (optional)
-    # TODO - add discriminator!
+    # copy weights from a checkpoint (optional) TODO - add discriminator
     if pretrained:
         if os.path.isfile(pretrained):
             print("=> loading generative model '{}'".format(pretrained))
@@ -102,7 +101,7 @@ def sr_resnet_perform_training(train_set, cfg:dict, pretrained:str=None, vgg_los
     for epoch in range(1, epochs + 1):
         train(training_data_loader, 
                 optimizer_g, optimizer_d, 
-                generative_model, discriminative_model, 
+                # generative_model, discriminative_model, 
                 content_loss_criterion, adversarial_loss_criterion, 
                 epoch, lr, vgg_loss, verbose)
     if NEPTUNE:
@@ -113,7 +112,7 @@ def sr_resnet_perform_training(train_set, cfg:dict, pretrained:str=None, vgg_los
 
 def train(training_data_loader, 
             optimizer_g, optimizer_d, 
-            generative_model, discriminative_model, 
+            # generative_model, discriminative_model, 
             content_loss_criterion, adversarial_loss_criterion,
             epoch, lr, vgg_loss, verbose):
 
@@ -151,11 +150,13 @@ def train(training_data_loader,
             content_loss = content_loss_criterion(content_input, content_target)
         else:
             content_loss = content_loss_criterion(output.float(), target.float())
-        
+        print('GENERATOR')
         sr_discriminated = discriminative_model(output)
         adversarial_loss = adversarial_loss_criterion(sr_discriminated, torch.ones_like(sr_discriminated))
         perceptual_loss = content_loss + 1e-3 * adversarial_loss # coefficient to weight the adversarial loss in the perceptual loss
-        
+        print('sr_discriminated', sr_discriminated)
+        print('adversarial_loss',adversarial_loss.item())
+
         # optimize generator
         optimizer_g.zero_grad()
         if vgg_loss:
@@ -166,10 +167,14 @@ def train(training_data_loader,
         # DISCRIMINATOR
         hr_discriminated = discriminative_model(target.float())
         sr_discriminated = discriminative_model(output.detach())
+        print('DISCRIMINATOR')
+        print('hr_discriminated', hr_discriminated)
+        print('sr_discriminated', sr_discriminated)
 
         adversarial_loss = adversarial_loss_criterion(sr_discriminated, torch.zeros_like(sr_discriminated)) + \
                            adversarial_loss_criterion(hr_discriminated, torch.ones_like(hr_discriminated))
 
+        print('adversarial_loss',adversarial_loss.item())
         # optimize discriminator
         optimizer_d.zero_grad()
         adversarial_loss.backward()

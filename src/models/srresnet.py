@@ -35,9 +35,6 @@ class _NetG(nn.Module):
             nn.Conv2d(in_channels=64, out_channels=256, kernel_size=3, stride=1, padding=1, bias=False),
             nn.PixelShuffle(2),
             nn.LeakyReLU(0.2, inplace=True),
-            # nn.Conv2d(in_channels=64, out_channels=256, kernel_size=3, stride=1, padding=1, bias=False),
-            # nn.PixelShuffle(2),
-            # nn.LeakyReLU(0.2, inplace=True),
         )
 
         self.conv_output = nn.Conv2d(in_channels=64, out_channels=3, kernel_size=9, stride=1, padding=4, bias=False)
@@ -56,19 +53,20 @@ class _NetG(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x):
+        print(x.shape)
         out = self.relu(self.conv_input(x))
-        # print(out.shape)
+        print(out.shape)
         residual = out
         out = self.residual(out)
-        # print(out.shape)
+        print(out.shape)
         out = self.bn_mid(self.conv_mid(out))
-        # print(out.shape)
+        print(out.shape)
         out = torch.add(out,residual)
-        # print(out.shape)
+        print(out.shape)
         out = self.upscale4x(out)
-        # print(out.shape)
+        print(out.shape)
         out = self.conv_output(out)
-        # print(out.shape)
+        print(out.shape)
         return out
 
 # COMPARED TO THE PAPER - for some reason sometimes the kernel size was set to 4 
@@ -123,7 +121,7 @@ class _NetD(nn.Module):
         self.fc1 = nn.Linear(512 * 2 * 8, 1024)
         self.LeakyReLU = nn.LeakyReLU(0.2, inplace=True)
         self.fc2 = nn.Linear(1024, 1)
-        # self.sigmoid = nn.Sigmoid()
+        self.sigmoid = nn.Sigmoid()
 
         # what does it exactly do?
         for m in self.modules():
@@ -134,21 +132,22 @@ class _NetD(nn.Module):
                 m.bias.data.fill_(0)
 
     def forward(self, input):
-        # print(input.shape)
+        print(input.shape)
         out = self.features(input)
-        # print(out.shape)
+        print(out.shape)
         # state size. (512) x 6 x 6
         out = out.view(out.size(0), -1)
-        # print(out.shape)
+        print(out.shape)
         # state size. (512 x 6 x 6)
         out = self.fc1(out)
-        # print(out.shape)
+        print(out.shape)
         # state size. (1024)
         out = self.LeakyReLU(out)
-        # print(out.shape)
+        print(out.shape)
         out = self.fc2(out)
-        # print(out.shape)
-        # out = self.sigmoid(out) -> not used since we apply BCEWithLogitsLoss
+        print(out.shape)
+        out = self.sigmoid(out)
+        print(out.shape)
         out.view(-1, 1).squeeze(1)
-        # print(out.shape)
+        print(out.shape)
         return out
