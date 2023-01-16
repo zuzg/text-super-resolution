@@ -171,9 +171,9 @@ def save_checkpoint(model, epoch, save_name, params):
     torch.save(state, model_out_path)
     print(f"Model saved to {model_out_path}")
 
-    # TODO: uncomment & change/delete
+    # TODO: run this when we have final model
     # if new_model is not None:
-    #     model = neptune.init_model(key=f"SRRN{save_name}", project="super-girls/Super-Resolution", api_token=api_token)
+    #     model = neptune.init_model(key=f"SRRN", project="super-girls/Super-Resolution", api_token=api_token)
     #     model["sys/tags"].add(["SRResNet"])
     #     model["total_params"] = params
     #     model_id = model["sys/id"].fetch()
