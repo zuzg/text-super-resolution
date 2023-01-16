@@ -27,15 +27,33 @@ def display_img_tensor(img:torch.tensor, rescale=False):
     plt.axis('off')
     plt.imshow(np.clip(img_plt, 0, 1))
 
-def get_prediction(LR_image:torch.tensor, model, show:bool=True) -> torch.tensor:
+def get_prediction(LR_image:torch.tensor, model, display:bool=True) -> torch.tensor:
     LR_image = torch.unsqueeze(LR_image, dim=0)
     SR_image = model.forward(LR_image.float())
     SR_image = SR_image.detach()[0]
-    if show:
+    if display:
         display_img_tensor(SR_image, rescale=True)
     return SR_image
 
-def display_stats(HR_image, SR_image, data_range=2):
+def get_stats(HR_image:torch.tensor, SR_image:torch.tensor, data_range:int=2, display:bool=True):
     psnr_val = psnr(HR_image.numpy(), SR_image.numpy(), data_range=data_range)
     ssim_val = ssim(HR_image.numpy(), SR_image.numpy(), chanel_axis=0, data_range=data_range, win_size=3)
-    print(f'PSNR :{psnr_val:.3f}\nSSIM: {ssim_val:.3f}')
+    if display:
+        print(f'PSNR :{psnr_val:.3f}\nSSIM: {ssim_val:.3f}')
+    return psnr_val, ssim_val
+
+def eval_model(model, test_set:dict) -> tuple[float]:
+    model.eval()
+    keys = test_set.keys()
+    avg_psnr = {key: 0 for key in keys}
+    avg_ssim = {key: 0 for key in keys}
+    for key in keys:
+        for LR_image, HR_image in test_set[key]:
+            SR_image = get_prediction(LR_image, model, display=False)
+            psnr_val, ssim_val = get_stats(HR_image, SR_image, display=False)
+            # print(psnr_val, ssim_val)
+            avg_psnr[key] += psnr_val
+            avg_ssim[key] += ssim_val
+        avg_psnr[key] /= len(test_set[key])
+        avg_ssim[key] /= len(test_set[key])
+    return avg_psnr, avg_ssim
