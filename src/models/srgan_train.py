@@ -215,14 +215,10 @@ def save_checkpoint(model, epoch, save_name, params):
     torch.save(state, model_out_path)
     print(f"Model saved to {model_out_path}")
 
-    model_nept = neptune.init_model(key=f"GAN", project="super-girls/Super-Resolution", api_token=api_token)
-    model_nept["sys/tags"].add(["SRGAN"])
-    model_nept["total_params"] = params
     if NEPTUNE:
         model_version = neptune.init_model_version(model="SR-GAN", project="super-girls/Super-Resolution", api_token=api_token)
         model_version["weights"].upload(f"{model_out_path}")
         model_version.stop()
-    model_nept.stop()
 
 if __name__ == "__main__":
     sr_gan_perform_training()
