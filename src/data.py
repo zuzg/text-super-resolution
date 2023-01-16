@@ -53,6 +53,7 @@ def get_data_from_dir(dir_path: str, filenames: list[str], min_height: int = Non
 
     return images_LR_HR
 
+
 def load_tests_sets(difficulty_levels:list[str]= ['easy', 'medium', 'hard'], n_test:int=None, convert_mdb:bool=True) -> dict[SRDataset]:
     test_data_dict = dict()
 

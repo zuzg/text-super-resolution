@@ -17,8 +17,8 @@ from src.cfg import read_config
 from src.utils import evaluate_model
 from src.data import SRDataset
 
-def sr_resnet_perform_training(train_set:SRDataset, cfg:dict, test_set:dict[SRDataset]=None, pretrained:str=None, vgg_loss:bool=True, run_neptune:bool=True, save:str=None, verbose:bool=True):
 
+def sr_resnet_perform_training(train_set:SRDataset, cfg:dict, test_set:dict[SRDataset]=None, pretrained:str=None, vgg_loss:bool=True, run_neptune:bool=True, save:str=None, verbose:bool=True):
     # read config parameters
     batch_size = cfg["batch_size"]
     epochs = cfg["epochs"]
@@ -99,8 +99,9 @@ def sr_resnet_perform_training(train_set:SRDataset, cfg:dict, test_set:dict[SRDa
         if test_set is not None:
             avg_psnr, avg_ssim = evaluate_model(generative_model, test_set)
             if NEPTUNE:
-                run["train/avg_PSNR"].append(avg_psnr)
-                run["train/avg_SSIM"].append(avg_ssim)
+                for mode in ['easy', 'medium', 'hard']:
+                    run[f"eval/{mode}/psnr_avg"].append(avg_psnr[mode])
+                    run[f"eval/{mode}/ssim_avg"].append(avg_ssim[mode])
     if NEPTUNE:
         run.stop()
     if save is not None:
@@ -174,15 +175,15 @@ def save_checkpoint(model, epoch, save_name, params):
     print(f"Model saved to {model_out_path}")
 
     # TODO: run this when we have final model
-    # if new_model is not None:
-    #     model = neptune.init_model(key=f"SRRN", project="super-girls/Super-Resolution", api_token=api_token)
-    #     model["sys/tags"].add(["SRResNet"])
-    #     model["total_params"] = params
-    #     model_id = model["sys/id"].fetch()
+    # model_nept = neptune.init_model(key=f"RESNET", project="super-girls/Super-Resolution", api_token=api_token)
+    # model_nept["sys/tags"].add(["SRResNet"])
+    # model_nept["total_params"] = params
+
     if NEPTUNE:
-        model_version = neptune.init_model_version(model="SR-SRRN6", project="super-girls/Super-Resolution", api_token=api_token)
+        model_version = neptune.init_model_version(model="SR-RESNET", project="super-girls/Super-Resolution", api_token=api_token)
         model_version["weights"].upload(f"{model_out_path}")
         model_version.stop()
+    # model_nept.stop()
 
 if __name__ == "__main__":
     sr_resnet_perform_training()
