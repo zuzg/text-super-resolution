@@ -35,8 +35,7 @@ def get_prediction(LR_image:torch.tensor, model, show:bool=True) -> torch.tensor
         display_img_tensor(SR_image, rescale=True)
     return SR_image
 
-def display_stats(HR_image, SR_image):
-    psnr_val = psnr(HR_image.numpy(), SR_image.numpy(), data_range=2)
-    ssim_val = ssim(HR_image.numpy(), SR_image.numpy(), chanel_axis=0, data_range=2., win_size=3)
-
+def display_stats(HR_image, SR_image, data_range=2):
+    psnr_val = psnr(HR_image.numpy(), SR_image.numpy(), data_range=data_range)
+    ssim_val = ssim(HR_image.numpy(), SR_image.numpy(), chanel_axis=0, data_range=data_range, win_size=3)
     print(f'PSNR :{psnr_val:.3f}\nSSIM: {ssim_val:.3f}')

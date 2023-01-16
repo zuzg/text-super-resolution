@@ -5,30 +5,35 @@ import PIL
 import torch
 from torch.utils.data import Dataset
 import torchvision.transforms as transforms
-
+from src.mdb_to_jpg import mdb_to_jpg
 from src.utils import imshow
 
 # TODO replace this with final one
 class SRDataset(Dataset):
-    def __init__(self, images, crop_size=None, normalize=True): 
+    def __init__(self, images, crop=True, normalize=True): 
         self.normalize = normalize
-        self.crop_size = crop_size
+        self.crop = crop
         self.images = images
 
     def __len__(self):
         return len(self.images)
 
     def preprocess_image(self, image):
-        if self.crop_size is not None:
-            hr_cropped = cv2.resize(image[0], self.crop_size)
-            lr_cropped = cv2.resize(image[1], (24, 24))
-        # TODO patching?
+        lr = image[0]
+        hr = image[1]
+        if self.crop:
+            lr = cv2.resize(lr, (64, 16))
+            hr = cv2.resize(hr, (128, 32))
         if self.normalize:
-            lr_norm = lr_cropped / 255
-            hr_norm = hr_cropped / 255 # [0, 1]
 
-            return torch.tensor(lr_norm).swapaxes(1,2).swapaxes(0,1), torch.tensor(hr_norm).swapaxes(1,2).swapaxes(0,1)
-        return torch.tensor(image[0]).swapaxes(1,2).swapaxes(0,1), torch.tensor(image[1]).swapaxes(1,2).swapaxes(0,1)
+            lr = lr / 255 # [0; 1]
+            # lr = lr.astype(np.float32)
+            # lr = (lr - 127.5) / 127.5 # [-1; 1]
+
+            hr = hr.astype(np.float32)
+            hr = (hr - 127.5) / 127.5 # [-1; 1]
+
+        return torch.tensor(lr).swapaxes(1,2).swapaxes(0,1), torch.tensor(hr).swapaxes(1,2).swapaxes(0,1)
 
     def __getitem__(self, index):        
         image = self.images[index]         
@@ -49,6 +54,22 @@ def get_data_from_dir(dir_path: str, filenames: list[str], min_height: int = Non
 
     return images_LR_HR
 
+def load_tests_sets(difficulty_levels:list[str]= ['easy', 'medium', 'hard'], n_test:int=None, convert_mdb:bool=True) -> dict[SRDataset]:
+    test_data_dict = dict()
+
+    for difficulty in difficulty_levels:
+        print(str.upper(difficulty))
+        test_data_path = f'data/TextZoom/test_img/{difficulty}/'
+        if convert_mdb:
+            lmdb_file = f'data/TextZoom/test/{difficulty}'
+            n = mdb_to_jpg(test_data_path, lmdb_file)
+        if n_test is None:
+            test_img_data = get_data_from_dir(test_data_path, [str(i) for i in range(1, n+1)])
+        else:
+            test_img_data = get_data_from_dir(test_data_path, [str(i) for i in range(1, n_test+1)])
+        test_img_data_processed = SRDataset(test_img_data)
+        test_data_dict[difficulty] = test_img_data_processed
+    return test_data_dict
 
 def show_LR_HR_images(imgLR, imgHR):
     if imgHR.shape == imgLR.shape:
