@@ -4,6 +4,8 @@ import numpy as np
 from IPython.display import display
 import matplotlib.pyplot as plt
 import torch
+from skimage.metrics import peak_signal_noise_ratio as psnr
+from skimage.metrics import structural_similarity as ssim
 
 def imshow(a: np.ndarray):
     a = a.clip(0, 255).astype('uint8')
@@ -15,7 +17,7 @@ def imshow(a: np.ndarray):
     display(PIL.Image.fromarray(a))
 
 
-def display_img_tensor(img, rescale=False):
+def display_img_tensor(img:torch.tensor, rescale=False):
     if rescale:
         img = img.add(1).div(2)
     images_np  = img.cpu().numpy()
@@ -25,7 +27,16 @@ def display_img_tensor(img, rescale=False):
     plt.axis('off')
     plt.imshow(np.clip(img_plt, 0, 1))
 
-def show_prediction(LR_image, model):
+def get_prediction(LR_image:torch.tensor, model, show:bool=True) -> torch.tensor:
     LR_image = torch.unsqueeze(LR_image, dim=0)
     SR_image = model.forward(LR_image.float())
-    display_img_tensor(SR_image.detach()[0], rescale=True)
+    SR_image = SR_image.detach()[0]
+    if show:
+        display_img_tensor(SR_image, rescale=True)
+    return SR_image
+
+def display_stats(HR_image, SR_image):
+    psnr_val = psnr(HR_image.numpy(), SR_image.numpy(), data_range=2)
+    ssim_val = ssim(HR_image.numpy(), SR_image.numpy(), chanel_axis=0, data_range=2., win_size=3)
+
+    print(f'PSNR :{psnr_val:.3f}\nSSIM: {ssim_val:.3f}')
