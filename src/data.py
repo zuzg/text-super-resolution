@@ -1,9 +1,12 @@
 import cv2
 import numpy as np
-from src.utils import imshow
 import matplotlib.pyplot as plt
+import PIL
 import torch
 from torch.utils.data import Dataset
+import torchvision.transforms as transforms
+
+from src.utils import imshow
 
 # TODO replace this with final one
 class SRDataset(Dataset):
@@ -66,3 +69,11 @@ def get_height_width_distribution(shapes_list: list[tuple[int]]):
     axs[1].hist(width_list, color='deeppink')
     axs[1].set_title("Images width distribution")
     plt.show()
+
+
+def transform_(path):
+    img = PIL.Image.open(path)
+    img = img.resize((64, 16), PIL.Image.BICUBIC)
+    img_tensor = transforms.ToTensor()(img)
+    img_tensor = img_tensor.unsqueeze(0)
+    return img_tensor
