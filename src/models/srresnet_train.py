@@ -171,6 +171,7 @@ def save_checkpoint(model, epoch, save_name, params):
     torch.save(state, model_out_path)
     print(f"Model saved to {model_out_path}")
 
+    # TODO: uncomment & change/delete
     # if new_model is not None:
     #     model = neptune.init_model(key=f"SRRN{save_name}", project="super-girls/Super-Resolution", api_token=api_token)
     #     model["sys/tags"].add(["SRResNet"])
@@ -179,7 +180,6 @@ def save_checkpoint(model, epoch, save_name, params):
     if NEPTUNE:
         model_version = neptune.init_model_version(model="SR-SRRN6", project="super-girls/Super-Resolution", api_token=api_token)
         model_version["weights"].upload(f"{model_out_path}")
-        # model.stop()
         model_version.stop()
 
 if __name__ == "__main__":
