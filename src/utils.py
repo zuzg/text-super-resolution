@@ -3,6 +3,7 @@ import PIL
 import numpy as np
 from IPython.display import display
 import matplotlib.pyplot as plt
+import torch
 
 def imshow(a: np.ndarray):
     a = a.clip(0, 255).astype('uint8')
@@ -23,3 +24,8 @@ def display_img_tensor(img, rescale=False):
     plt.grid(False)
     plt.axis('off')
     plt.imshow(np.clip(img_plt, 0, 1))
+
+def show_prediction(LR_image, model):
+    LR_image = torch.unsqueeze(LR_image, dim=0)
+    SR_image = model.forward(LR_image.float())
+    display_img_tensor(SR_image.detach()[0], rescale=True)
