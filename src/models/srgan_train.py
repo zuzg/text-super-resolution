@@ -14,12 +14,10 @@ import neptune.new as neptune
 
 from src.models.srresnet import _NetG, _NetD
 from src.cfg import read_config
-# from src.data import SRDataset
+from src.utils import evaluate_model
+from src.data import SRDataset
 
-
-
-#TODO - train_set type SRDataset once it is properly preprocessed and added to src.data
-def sr_gan_perform_training(train_set, cfg:dict, pretrained:str=None, vgg_loss:bool=True, run_neptune:bool=True, save:str=None, verbose:bool=True):
+def sr_gan_perform_training(train_set:SRDataset, cfg:dict, test_set:dict[SRDataset]=None, pretrained:str=None, vgg_loss:bool=True, run_neptune:bool=True, save:str=None, verbose:bool=True):
 
     # read config parameters
     batch_size = cfg["batch_size"]
@@ -101,10 +99,14 @@ def sr_gan_perform_training(train_set, cfg:dict, pretrained:str=None, vgg_loss:b
     print("===> Training")
     for epoch in range(1, epochs + 1):
         train(training_data_loader, 
-                optimizer_g, optimizer_d, 
-                # generative_model, discriminative_model, 
+                optimizer_g, optimizer_d,  
                 content_loss_criterion, adversarial_loss_criterion, 
                 epoch, lr, vgg_loss, verbose)
+        if test_set is not None:
+            avg_psnr, avg_ssim = evaluate_model(generative_model, test_set)
+            if NEPTUNE:
+                run["train/avg_PSNR"].append(avg_psnr)
+                run["train/avg_SSIM"].append(avg_ssim)
     if NEPTUNE:
         run.stop()
     if save is not None:
@@ -113,7 +115,6 @@ def sr_gan_perform_training(train_set, cfg:dict, pretrained:str=None, vgg_loss:b
 
 def train(training_data_loader, 
             optimizer_g, optimizer_d, 
-            # generative_model, discriminative_model, 
             content_loss_criterion, adversarial_loss_criterion,
             epoch, lr, vgg_loss, verbose):
 

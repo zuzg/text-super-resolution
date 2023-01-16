@@ -42,7 +42,7 @@ def get_stats(HR_image:torch.tensor, SR_image:torch.tensor, data_range:int=2, di
         print(f'PSNR :{psnr_val:.3f}\nSSIM: {ssim_val:.3f}')
     return psnr_val, ssim_val
 
-def eval_model(model, test_set:dict) -> tuple[float]:
+def evaluate_model(model, test_set:dict) -> tuple[float]:
     model.eval()
     keys = test_set.keys()
     avg_psnr = {key: 0 for key in keys}

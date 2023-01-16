@@ -14,12 +14,10 @@ import neptune.new as neptune
 
 from src.models.srresnet import _NetG, _NetD
 from src.cfg import read_config
-# from src.data import SRDataset
+from src.utils import evaluate_model
+from src.data import SRDataset
 
-
-
-#TODO - train_set type SRDataset once it is properly preprocessed and added to src.data
-def sr_resnet_perform_training(train_set, cfg:dict, pretrained:str=None, vgg_loss:bool=True, run_neptune:bool=True, save:str=None, verbose:bool=True):
+def sr_resnet_perform_training(train_set:SRDataset, cfg:dict, test_set:dict[SRDataset]=None, pretrained:str=None, vgg_loss:bool=True, run_neptune:bool=True, save:str=None, verbose:bool=True):
 
     # read config parameters
     batch_size = cfg["batch_size"]
@@ -28,7 +26,7 @@ def sr_resnet_perform_training(train_set, cfg:dict, pretrained:str=None, vgg_los
     step_lr = cfg["step_lr"]
     threads = cfg["threads"]
 
-    global generative_model, discriminative_model, VGGmodel, step, device, run, NEPTUNE, api_token, beta
+    global generative_model, VGGmodel, step, device, run, NEPTUNE, api_token, beta
     NEPTUNE = run_neptune
     
     if NEPTUNE:
@@ -65,7 +63,6 @@ def sr_resnet_perform_training(train_set, cfg:dict, pretrained:str=None, vgg_los
                 out = self.feature(x)
                 return out
         VGGmodel = _content_model()
-        # VGGmodel.eval()
         VGGmodel = VGGmodel.to(device)
     else:
         print("===> Runs without VGG (MSE loss applied)")
@@ -80,7 +77,7 @@ def sr_resnet_perform_training(train_set, cfg:dict, pretrained:str=None, vgg_los
     generative_model_total_params = sum(p.numel() for p in generative_model.parameters())
     total_params = generative_model_total_params
 
-    # copy weights from a checkpoint (optional) TODO - add discriminator
+    # copy weights from a checkpoint (optional)
     if pretrained:
         if os.path.isfile(pretrained):
             print("=> loading generative model '{}'".format(pretrained))
@@ -99,6 +96,11 @@ def sr_resnet_perform_training(train_set, cfg:dict, pretrained:str=None, vgg_los
                 optimizer_g,
                 content_loss_criterion,
                 epoch, lr, vgg_loss, verbose)
+        if test_set is not None:
+            avg_psnr, avg_ssim = evaluate_model(generative_model, test_set)
+            if NEPTUNE:
+                run["train/avg_PSNR"].append(avg_psnr)
+                run["train/avg_SSIM"].append(avg_ssim)
     if NEPTUNE:
         run.stop()
     if save is not None:
