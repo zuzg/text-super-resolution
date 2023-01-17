@@ -5,3 +5,4 @@
 3. Models:
     * SRResNet: https://arxiv.org/pdf/1609.04802.pdf
     * Text Gestalt: https://arxiv.org/pdf/2112.08171v1.pdf, https://arxiv.org/pdf/1706.03762v5.pdf
+    * ESRGAN: https://arxiv.org/pdf/1809.00219.pdf

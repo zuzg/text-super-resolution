@@ -1,0 +1,6 @@
+batch_size: 16
+epochs: 500
+lr: 0.0001
+step_lr: 200
+threads: 0 
+beta: 0.01
