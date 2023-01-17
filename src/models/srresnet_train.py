@@ -36,7 +36,10 @@ def sr_resnet_perform_training(train_set: SRDataset, cfg: dict, generative_model
         api_token = read_config("cfg/tokens/api_token.yaml")["token"]
         run = neptune.init_run(
             project="super-girls/Super-Resolution", api_token=api_token)
-        run["sys/tags"].add(["SRResNet"])
+        if isinstance(generative_model, _NetG):
+            run["sys/tags"].add(["SRResNet"])
+        else:
+            run["sys/tags"].add(["E-Generator"])
         run["params"] = cfg
 
     step = step_lr
@@ -193,8 +196,12 @@ def save_checkpoint(model, epoch, save_name, params):
     # model_nept["total_params"] = params
 
     if NEPTUNE:
+        if isinstance(model, _NetG):
+            model_name = "SR-RESNET"
+        else:
+            model_name = "SR-E"
         model_version = neptune.init_model_version(
-            model="SR-RESNET", project="super-girls/Super-Resolution", api_token=api_token)
+            model=model_name, project="super-girls/Super-Resolution", api_token=api_token)
         model_version["weights"].upload(f"{model_out_path}")
         model_version.stop()
     # model_nept.stop()
