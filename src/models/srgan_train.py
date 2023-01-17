@@ -17,7 +17,8 @@ from src.cfg import read_config
 from src.utils import evaluate_model
 from src.data import SRDataset
 
-def sr_gan_perform_training(train_set:SRDataset, cfg:dict, test_set:dict[SRDataset]=None, pretrained:str=None, vgg_loss:bool=True, run_neptune:bool=True, save:str=None, verbose:bool=True):
+def sr_gan_perform_training(train_set:SRDataset, cfg:dict, test_set:dict[SRDataset]=None, pretrained:str=None, vgg_loss:bool=True, 
+    run_neptune:bool=True, save:str=None, verbose:bool=True, display_batches:bool=False):
 
     # read config parameters
     batch_size = cfg["batch_size"]
@@ -26,7 +27,7 @@ def sr_gan_perform_training(train_set:SRDataset, cfg:dict, test_set:dict[SRDatas
     step_lr = cfg["step_lr"]
     threads = cfg["threads"]
 
-    global generative_model, discriminative_model, VGGmodel, step, device, run, NEPTUNE, api_token, beta
+    global generative_model, discriminative_model, VGGmodel, step, device, run, NEPTUNE, api_token, beta, min_discriminator_loss
     NEPTUNE = run_neptune
     
     if NEPTUNE:
@@ -37,6 +38,7 @@ def sr_gan_perform_training(train_set:SRDataset, cfg:dict, test_set:dict[SRDatas
 
     step=step_lr
     beta = cfg['beta']
+    min_discriminator_loss = cfg["min_discriminator_loss"]
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     cuda = torch.cuda.is_available()
     seed = 10
@@ -63,7 +65,6 @@ def sr_gan_perform_training(train_set:SRDataset, cfg:dict, test_set:dict[SRDatas
                 out = self.feature(x)
                 return out
         VGGmodel = _content_model()
-        VGGmodel.eval()
         VGGmodel = VGGmodel.to(device)
     else:
         print("===> Runs without VGG (MSE loss applied)")
@@ -86,7 +87,7 @@ def sr_gan_perform_training(train_set:SRDataset, cfg:dict, test_set:dict[SRDatas
     if pretrained:
         if os.path.isfile(pretrained):
             print("=> loading generative model '{}'".format(pretrained))
-            weights = torch.load(pretrained)
+            weights = torch.load(pretrained, map_location=torch.device(device))
             generative_model.load_state_dict(weights['model'].state_dict())
         else:
             print("=> no generative model found at '{}'".format(pretrained))
@@ -94,14 +95,14 @@ def sr_gan_perform_training(train_set:SRDataset, cfg:dict, test_set:dict[SRDatas
 
     print("===> Setting Optimizers")
     optimizer_g = optim.Adam(generative_model.parameters(), lr=lr)
-    optimizer_d = optim.Adam(discriminative_model.parameters(), lr=lr)
+    optimizer_d = optim.Adam(discriminative_model.parameters(), lr=lr/10)
 
     print("===> Training")
     for epoch in range(1, epochs + 1):
         train(training_data_loader, 
                 optimizer_g, optimizer_d,  
                 content_loss_criterion, adversarial_loss_criterion, 
-                epoch, lr, vgg_loss, verbose)
+                epoch, lr, vgg_loss, verbose, display_batches)
         if test_set is not None:
             avg_psnr, avg_ssim = evaluate_model(generative_model, test_set)
             if NEPTUNE:
@@ -117,7 +118,7 @@ def sr_gan_perform_training(train_set:SRDataset, cfg:dict, test_set:dict[SRDatas
 def train(training_data_loader, 
             optimizer_g, optimizer_d, 
             content_loss_criterion, adversarial_loss_criterion,
-            epoch, lr, vgg_loss, verbose):
+            epoch, lr, vgg_loss, verbose, display_batches):
 
     lr = lr * (0.1 ** (epoch // step))
     # UPDATE LEARNING RATE
@@ -153,14 +154,16 @@ def train(training_data_loader,
             content_loss = content_loss_criterion(content_input, content_target)
         else:
             content_loss = content_loss_criterion(output.float(), target.float())
-        # print('GENERATOR')
-        # print('content_loss', content_loss)
+
         sr_discriminated = discriminative_model(output)
         adversarial_loss = adversarial_loss_criterion(sr_discriminated, torch.ones_like(sr_discriminated))
         perceptual_loss = content_loss + beta * adversarial_loss # beta coefficient to weight the adversarial loss in the perceptual loss
-        # print('sr_discriminated', sr_discriminated)
-        # print('adversarial_loss',adversarial_loss.item())
-        # print('-----------------------------------')
+        if display_batches:
+            print('GENERATOR')
+            print('content_loss', content_loss)
+            print('sr_discriminated', sr_discriminated)
+            print('adversarial_loss',adversarial_loss.item())
+            print('-----------------------------------')
 
         # optimize generator
         optimizer_g.zero_grad()
@@ -172,23 +175,25 @@ def train(training_data_loader,
         # DISCRIMINATOR
         hr_discriminated = discriminative_model(target.float())
         sr_discriminated = discriminative_model(output.detach())
-        # print('DISCRIMINATOR')
-        # print('hr_discriminated', hr_discriminated)
-        # print('sr_discriminated', sr_discriminated)
 
-        # print('discriminator losses')
         sr_predictions = adversarial_loss_criterion(sr_discriminated, torch.zeros_like(sr_discriminated))
         hr_predictions = adversarial_loss_criterion(hr_discriminated, torch.ones_like(hr_discriminated))
-        # print('sr_predictions', sr_predictions.item())
-        # print('hr_predictions', hr_predictions.item())
+        if display_batches:
+            print('DISCRIMINATOR')
+            print('hr_discriminated', hr_discriminated)
+            print('sr_discriminated', sr_discriminated)
+            print('discriminator losses')
+            print('sr_predictions', sr_predictions.item())
+            print('hr_predictions', hr_predictions.item())
 
         adversarial_loss = sr_predictions + hr_predictions
-
-        # print('adversarial_loss',adversarial_loss.item())
+        if display_batches:
+            print('adversarial_loss',adversarial_loss.item())
         # optimize discriminator
-        optimizer_d.zero_grad()
-        adversarial_loss.backward()
-        optimizer_d.step()
+        if adversarial_loss >= min_discriminator_loss:
+            optimizer_d.zero_grad()
+            adversarial_loss.backward()
+            optimizer_d.step()
 
         if verbose:
             if vgg_loss:
