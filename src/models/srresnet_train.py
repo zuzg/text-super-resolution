@@ -99,7 +99,7 @@ def sr_resnet_perform_training(train_set:SRDataset, cfg:dict, test_set:dict[SRDa
         if test_set is not None:
             avg_psnr, avg_ssim = evaluate_model(generative_model, test_set)
             if NEPTUNE:
-                for mode in ['easy', 'medium', 'hard']:
+                for mode in avg_psnr.keys():
                     run[f"eval/{mode}/psnr_avg"].append(avg_psnr[mode])
                     run[f"eval/{mode}/ssim_avg"].append(avg_ssim[mode])
     if NEPTUNE:

@@ -22,7 +22,7 @@ def display_img_tensor(img:torch.tensor, rescale=False):
     if rescale:
         img = img.add(1).div(2)
     images_np  = img.cpu().numpy()
-    img_plt = images_np.transpose(1,2,0)
+    img_plt = images_np.transpose(1,2,0)[:, :, ::-1]
     # print(img_plt.shape)
     plt.grid(False)
     plt.axis('off')
