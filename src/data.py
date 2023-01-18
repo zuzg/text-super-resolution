@@ -56,7 +56,6 @@ def get_data_from_dir(dir_path: str, filenames: list[str], min_height: int = Non
 
 def load_tests_sets(difficulty_levels:list[str]= ['easy', 'medium', 'hard'], n_test:int=None, convert_mdb:bool=True) -> dict[SRDataset]:
     test_data_dict = dict()
-
     for difficulty in difficulty_levels:
         print(str.upper(difficulty))
         test_data_path = f'data/TextZoom/test_img/{difficulty}/'
@@ -70,6 +69,16 @@ def load_tests_sets(difficulty_levels:list[str]= ['easy', 'medium', 'hard'], n_t
         test_img_data_processed = SRDataset(test_img_data)
         test_data_dict[difficulty] = test_img_data_processed
     return test_data_dict
+
+
+def get_train_test(data_path='data/TextZoom/train2_img/'):
+    # TODO change for while loop or sth
+    n = 2794
+    img_data = get_data_from_dir(data_path, [str(i) for i in range(1, n+1)])
+    train_set = SRDataset(img_data)
+    test_set = load_tests_sets(n_test=100, convert_mdb=False)
+    return train_set, test_set
+
 
 def show_LR_HR_images(imgLR, imgHR):
     if imgHR.shape == imgLR.shape:
