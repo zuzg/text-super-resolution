@@ -103,7 +103,7 @@ def sr_gan_perform_training(train_set: SRDataset, cfg: dict, generative_model=_N
 
     print("===> Setting Optimizers")
     optimizer_g = optim.Adam(generative_model.parameters(), lr=lr)
-    optimizer_d = optim.SGD(discriminative_model.parameters(), lr=lr)
+    optimizer_d = optim.Adam(discriminative_model.parameters(), lr=lr/10)
 
     print("===> Training")
     for epoch in range(1, epochs + 1):
