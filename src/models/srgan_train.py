@@ -17,8 +17,11 @@ from src.cfg import read_config
 from src.utils import evaluate_model
 from src.data import SRDataset
 
-def sr_gan_perform_training(train_set:SRDataset, cfg:dict, test_set:dict[SRDataset]=None, pretrained:str=None, vgg_loss:bool=True, 
-    run_neptune:bool=True, save:str=None, verbose:bool=True, display_batches:bool=False):
+
+def sr_gan_perform_training(train_set: SRDataset, cfg: dict, generative_model=_NetG(),
+                            discriminative_model=_NetD(), test_set: dict[SRDataset] = None,
+                            pretrained: str = None, vgg_loss: bool = True, run_neptune: bool = True,
+                            save: str = None, verbose: bool = True, display_batches:bool=False):
 
     # read config parameters
     batch_size = cfg["batch_size"]
@@ -27,16 +30,19 @@ def sr_gan_perform_training(train_set:SRDataset, cfg:dict, test_set:dict[SRDatas
     step_lr = cfg["step_lr"]
     threads = cfg["threads"]
 
-    global generative_model, discriminative_model, VGGmodel, step, device, run, NEPTUNE, api_token, beta, min_discriminator_loss
+    global VGGmodel, step, device, run, NEPTUNE, api_token, beta, min_discriminator_loss
     NEPTUNE = run_neptune
-    
+
     if NEPTUNE:
         api_token = read_config("cfg/tokens/api_token.yaml")["token"]
         run = neptune.init_run(project="super-girls/Super-Resolution", api_token=api_token)
-        run["sys/tags"].add(["SRGAN"])
+        if isinstance(generative_model, _NetG):
+            run["sys/tags"].add(["SRGAN"])
+        else:
+            run["sys/tags"].add(["ESRGAN"])
         run["params"] = cfg
 
-    step=step_lr
+    step = step_lr
     beta = cfg['beta']
     min_discriminator_loss = cfg["min_discriminator_loss"]
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
@@ -49,18 +55,22 @@ def sr_gan_perform_training(train_set:SRDataset, cfg:dict, test_set:dict[SRDatas
 
     if train_set is None:
         print("No training set provided!")
-        return 
+        return
 
-    training_data_loader = DataLoader(dataset=train_set, num_workers=threads, batch_size=batch_size)
+    training_data_loader = DataLoader(
+        dataset=train_set, num_workers=threads, batch_size=batch_size)
 
     if vgg_loss:
         print("===> Runs with VGG model support (VGG loss applied)")
         netVGG = models.vgg19()
-        netVGG.load_state_dict(model_zoo.load_url('https://download.pytorch.org/models/vgg19-dcbb9e9d.pth'))
+        netVGG.load_state_dict(model_zoo.load_url(
+            'https://download.pytorch.org/models/vgg19-dcbb9e9d.pth'))
+
         class _content_model(nn.Module):
             def __init__(self):
                 super(_content_model, self).__init__()
                 self.feature = nn.Sequential(*list(netVGG.features.children())[:-1])
+
             def forward(self, x):
                 out = self.feature(x)
                 return out
@@ -69,8 +79,6 @@ def sr_gan_perform_training(train_set:SRDataset, cfg:dict, test_set:dict[SRDatas
     else:
         print("===> Runs without VGG (MSE loss applied)")
 
-    generative_model = _NetG()
-    discriminative_model = _NetD()
     content_loss_criterion = nn.MSELoss()
     adversarial_loss_criterion = nn.BCEWithLogitsLoss()
 
@@ -91,18 +99,19 @@ def sr_gan_perform_training(train_set:SRDataset, cfg:dict, test_set:dict[SRDatas
             generative_model.load_state_dict(weights['model'].state_dict())
         else:
             print("=> no generative model found at '{}'".format(pretrained))
-            return 
+            return
 
     print("===> Setting Optimizers")
     optimizer_g = optim.Adam(generative_model.parameters(), lr=lr)
-    optimizer_d = optim.Adam(discriminative_model.parameters(), lr=lr/10)
+    optimizer_d = optim.SGD(discriminative_model.parameters(), lr=lr)
 
     print("===> Training")
     for epoch in range(1, epochs + 1):
-        train(training_data_loader, 
-                optimizer_g, optimizer_d,  
-                content_loss_criterion, adversarial_loss_criterion, 
-                epoch, lr, vgg_loss, verbose, display_batches)
+        train(generative_model, discriminative_model,
+              training_data_loader,
+              optimizer_g, optimizer_d,
+              content_loss_criterion, adversarial_loss_criterion,
+              epoch, lr, vgg_loss, verbose, display_batches)
         if test_set is not None:
             avg_psnr, avg_ssim = evaluate_model(generative_model, test_set)
             if NEPTUNE:
@@ -115,10 +124,11 @@ def sr_gan_perform_training(train_set:SRDataset, cfg:dict, test_set:dict[SRDatas
         save_checkpoint(generative_model, epoch, save, total_params)
 
 
-def train(training_data_loader, 
-            optimizer_g, optimizer_d, 
-            content_loss_criterion, adversarial_loss_criterion,
-            epoch, lr, vgg_loss, verbose, display_batches):
+def train(generative_model, discriminative_model,
+          training_data_loader,
+          optimizer_g, optimizer_d,
+          content_loss_criterion, adversarial_loss_criterion,
+          epoch, lr, vgg_loss, verbose, display_batches):
 
     lr = lr * (0.1 ** (epoch // step))
     # UPDATE LEARNING RATE
@@ -137,12 +147,12 @@ def train(training_data_loader,
 
     for input, target in tepoch:
         if verbose:
-                tepoch.set_description(f"Epoch {epoch}")
+            tepoch.set_description(f"Epoch {epoch}")
 
         # print('Shapes: ', input.shape, target.shape)
         input.requires_grad = True
         target.requires_grad = False
-   
+
         input, target = input.to(device), target.to(device)
 
         # GENERATOR
@@ -151,7 +161,8 @@ def train(training_data_loader,
         if vgg_loss:
             content_input = VGGmodel(output.float())
             content_target = VGGmodel(target.float()).detach()
-            content_loss = content_loss_criterion(content_input, content_target)
+            content_loss = content_loss_criterion(
+                content_input, content_target)
         else:
             content_loss = content_loss_criterion(output.float(), target.float())
 
@@ -197,10 +208,11 @@ def train(training_data_loader,
 
         if verbose:
             if vgg_loss:
-                tepoch.set_postfix(content_loss_VGG=content_loss.item(), adversarial_loss=adversarial_loss.item(), perceptual_loss=perceptual_loss.item())
-    
+                tepoch.set_postfix(content_loss_VGG=content_loss.item(
+                ), adversarial_loss=adversarial_loss.item(), perceptual_loss=perceptual_loss.item())
             else:
-                tepoch.set_postfix(content_loss_MSE=content_loss.item(), adversarial_loss=adversarial_loss.item(), perceptual_loss=perceptual_loss.item())
+                tepoch.set_postfix(content_loss_MSE=content_loss.item(
+                ), adversarial_loss=adversarial_loss.item(), perceptual_loss=perceptual_loss.item())
     if vgg_loss and NEPTUNE:
         run["train/content_loss_VGG"].append(content_loss.item())
         run["train/adversarial_loss"].append(adversarial_loss.item())
@@ -213,7 +225,7 @@ def train(training_data_loader,
 
 def save_checkpoint(model, epoch, save_name, params):
     model_out_path = "checkpoint/" + f"model_{save_name}.pth"
-    state = {"epoch": epoch ,"model": model}
+    state = {"epoch": epoch, "model": model}
     if not os.path.exists("checkpoint/"):
         os.makedirs("checkpoint/")
 
@@ -221,9 +233,15 @@ def save_checkpoint(model, epoch, save_name, params):
     print(f"Model saved to {model_out_path}")
 
     if NEPTUNE:
-        model_version = neptune.init_model_version(model="SR-GAN", project="super-girls/Super-Resolution", api_token=api_token)
+        if isinstance(model, _NetG):
+            model_name = "SR-GAN"
+        else:
+            model_name = "SR-EGAN"
+        model_version = neptune.init_model_version(
+            model=model_name, project="super-girls/Super-Resolution", api_token=api_token)
         model_version["weights"].upload(f"{model_out_path}")
         model_version.stop()
+
 
 if __name__ == "__main__":
     sr_gan_perform_training()
