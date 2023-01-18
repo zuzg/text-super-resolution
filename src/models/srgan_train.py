@@ -94,8 +94,17 @@ def sr_gan_perform_training(train_set:SRDataset, cfg:dict, test_set:dict[SRDatas
             return 
 
     print("===> Setting Optimizers")
-    optimizer_g = optim.Adam(generative_model.parameters(), lr=lr)
-    optimizer_d = optim.Adam(discriminative_model.parameters(), lr=lr/10)
+    if 'optimizer_g' in cfg:
+        print(f"==> Optimizer {cfg['optimizer_g']} used in the generator (default: Adam)")
+        optimizer_g = getattr(optim, cfg['optimizer_g'])(generative_model.parameters(), lr=lr)
+    else:
+        optimizer_g = optim.Adam(generative_model.parameters(), lr=lr)
+
+    if 'optimizer_d' in cfg:
+        print(f"==> Optimizer {cfg['optimizer_d']} used in the discriminator (default: Adam)")
+        optimizer_d = getattr(optim, cfg['optimizer_d'])(discriminative_model.parameters(), lr=lr)
+    else:
+        optimizer_d = optim.Adam(discriminative_model.parameters(), lr=lr)
 
     print("===> Training")
     for epoch in range(1, epochs + 1):

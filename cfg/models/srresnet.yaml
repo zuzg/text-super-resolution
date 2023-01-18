@@ -5,3 +5,4 @@ step_lr: 200
 threads: 0 
 beta: 0.001
 min_discriminator_loss: 0.1
+optimizer_d: 'SGD'
