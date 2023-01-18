@@ -51,7 +51,7 @@ def get_text_images_from_img(img_path:str, xml_path:str, display:bool=False) -> 
             # print(str(e))
             continue
 
-        image_cropped_LR = cv2.resize(cv2.resize(image_cropped, (50, 10)), (128,32), interpolation=cv2.INTER_NEAREST)
+        image_cropped_LR = cv2.resize(cv2.resize(image_cropped, (50, 10)), (128,32))
 
         if display:
             imshow(image_cropped)
