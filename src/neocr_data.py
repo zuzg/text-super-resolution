@@ -2,9 +2,10 @@ import cv2
 from bs4 import BeautifulSoup
 import glob
 import random
+import numpy as np
 from src.utils import imshow
 
-def get_text_points_list(path):
+def get_text_points_list(path:str) -> list[tuple]:
     with open(path, 'r', encoding="utf8") as f:
         data = f.read()
     Bs_data = BeautifulSoup(data, "xml")
@@ -19,7 +20,7 @@ def get_text_points_list(path):
         text_points.append((text,points))
     return text_points
 
-def get_text_images_from_img(img_path:str, xml_path:str, display:bool=False):
+def get_text_images_from_img(img_path:str, xml_path:str, display:bool=False) -> list[tuple[np.ndarray]]:
     image = cv2.imread(img_path, 1)
     # print(image.shape)
     if display:
@@ -58,7 +59,7 @@ def get_text_images_from_img(img_path:str, xml_path:str, display:bool=False):
         images.append((image_cropped_LR,image_cropped))
     return images
 
-def get_nocr_images(n:int=None, shuffle:bool=False):    
+def get_nocr_images(n:int=None, shuffle:bool=False) -> list[tuple[np.ndarray]]:    
     images = list()
     image_files = glob.glob("data/neocr_dataset/Images/users/pixtract/dataset/*.jpg")
     if shuffle:
