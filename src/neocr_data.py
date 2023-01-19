@@ -53,7 +53,7 @@ def get_text_images_from_img(img_path:str, xml_path:str, display:bool=False) -> 
         images.append((image_cropped_LR,image_cropped))
     return images
 
-def get_nocr_images(n:int=None, shuffle:bool=False) -> list[tuple[np.ndarray]]:    
+def get_neocr_images(n:int=None, shuffle:bool=False) -> list[tuple[np.ndarray]]:    
     images = list()
     image_files = glob.glob("data/neocr_dataset/Images/users/pixtract/dataset/*.jpg")
     if shuffle:
