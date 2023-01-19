@@ -73,7 +73,7 @@ def load_tests_sets(difficulty_levels:list[str]= ['easy', 'medium', 'hard'], n_t
 
 
 def get_train_test(data_path='data/TextZoom/train2_img/'):
-    img_data = get_data_from_dir(data_path, [str(i) for i in range(1, len(os.listdir(data_path)))])
+    img_data = get_data_from_dir(data_path, [str(i) for i in range(1, int(len(os.listdir(data_path))/2))])
     train_set = SRDataset(img_data)
     test_set = load_tests_sets(n_test=100, convert_mdb=False)
     return train_set, test_set
