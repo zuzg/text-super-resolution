@@ -1,3 +1,4 @@
+import os
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
@@ -72,9 +73,7 @@ def load_tests_sets(difficulty_levels:list[str]= ['easy', 'medium', 'hard'], n_t
 
 
 def get_train_test(data_path='data/TextZoom/train2_img/'):
-    # TODO change for while loop or sth
-    n = 2794
-    img_data = get_data_from_dir(data_path, [str(i) for i in range(1, n+1)])
+    img_data = get_data_from_dir(data_path, [str(i) for i in range(1, len(os.listdir(data_path)))])
     train_set = SRDataset(img_data)
     test_set = load_tests_sets(n_test=100, convert_mdb=False)
     return train_set, test_set

@@ -49,6 +49,7 @@ class NetG_E(nn.Module):
 
         self.conv_input = nn.Conv2d(
             in_channels=3, out_channels=64, kernel_size=9, stride=1, padding=4, bias=False)
+        self.dropout = nn.Dropout2d(p=0.05)
         self.relu = nn.LeakyReLU(0.2, inplace=True)
 
         self.residual = self.make_layer(RRDB, 16)
@@ -82,6 +83,7 @@ class NetG_E(nn.Module):
 
     def forward(self, x):
         out = self.relu(self.conv_input(x))
+        out = self.dropout(out)
         residual = out
         out = self.residual(out)
         out = self.bn_mid(self.conv_mid(out))
@@ -91,8 +93,6 @@ class NetG_E(nn.Module):
         return out
 
 
-# COMPARED TO THE PAPER - for some reason sometimes the kernel size was set to 4
-# but in the paper all kernel_size = 3 so I changed that
 class NetD_E(nn.Module):
     def __init__(self):
         super(NetD_E, self).__init__()
@@ -143,9 +143,7 @@ class NetD_E(nn.Module):
         self.fc1 = nn.Linear(512 * 2 * 8, 1024)
         self.LeakyReLU = nn.LeakyReLU(0.2, inplace=True)
         self.fc2 = nn.Linear(1024, 1)
-        # self.sigmoid = nn.Sigmoid()
 
-        # what does it exactly do?
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 m.weight.data.normal_(0.0, 0.02)

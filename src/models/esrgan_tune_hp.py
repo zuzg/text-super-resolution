@@ -33,6 +33,9 @@ def objective(trial):
     discriminator = NetD_E()
     discriminator.to(device)
 
+    weights = torch.load('checkpoint/model_e.pth', map_location=torch.device(device))
+    generator.load_state_dict(weights['model'].state_dict())
+
     train_set, test_set = get_train_test()
     training_data_loader = DataLoader(dataset=train_set, num_workers=threads, batch_size=batch_size)
 
@@ -121,7 +124,7 @@ def train(generator, discriminator,
 
 def tune_hp():
     study = optuna.create_study(direction="maximize")
-    study.optimize(objective, n_trials=10, show_progress_bar=True) # timeout=600, 
+    study.optimize(objective, n_trials=2, show_progress_bar=True) # timeout=600, 
 
     pruned_trials = study.get_trials(deepcopy=False, states=[TrialState.PRUNED])
     complete_trials = study.get_trials(deepcopy=False, states=[TrialState.COMPLETE])

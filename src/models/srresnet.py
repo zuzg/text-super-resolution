@@ -69,6 +69,8 @@ class _NetG(nn.Module):
         # print(out.shape)
         return out
 
+# add dropout to generator
+
 # COMPARED TO THE PAPER - for some reason sometimes the kernel size was set to 4 
 # but in the paper all kernel_size = 3 so I changed that
 class _NetD(nn.Module):
