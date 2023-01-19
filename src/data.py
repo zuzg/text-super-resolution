@@ -100,6 +100,19 @@ def get_height_width_distribution(shapes_list: list[tuple[int]]):
     axs[1].set_title("Images width distribution")
     plt.show()
 
+def tensor_to_numpy_255(tensor:torch.tensor, rescale:bool=False):
+    if rescale:
+        tensor = tensor.mul(255)
+    else:
+        tensor = tensor.add(1).mul(255)
+    return np.moveaxis(tensor.numpy(), 0, -1)
+
+def display_result_row(LR_image, HR_image, SR_image):
+    LR_image = tensor_to_numpy_255(LR_image, rescale=True)
+    LR_image = cv2.resize(LR_image,(128, 32))
+    HR_image = tensor_to_numpy_255(HR_image)
+    SR_image = tensor_to_numpy_255(SR_image)
+    imshow(cv2.resize(np.concatenate([LR_image, HR_image, SR_image], 1), None, fx=2.5, fy=2.5))
 
 def transform_(path):
     img = PIL.Image.open(path)
