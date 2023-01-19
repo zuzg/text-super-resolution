@@ -36,12 +36,6 @@ def get_text_images_from_img(img_path:str, xml_path:str, display:bool=False) -> 
             print(text)
             print(f'(x1, y1): {x, y},\t(x2, y2): {x2, y2}')
 
-        # if image.shape[0] > image.shape[1]:
-        #     image_cropped = image[x:x2, y:y2, :]
-        # else:
-        #     image_cropped = image[y:y2, x:x2, :]
-
-        # TODO fix this one
         try:
             image_cropped = image[y:y2, x:x2, :]
             if y2-y > x2-x:
