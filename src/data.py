@@ -7,7 +7,6 @@ import torch
 from torch.utils.data import Dataset
 import torchvision.transforms as transforms
 from src.mdb_to_jpg import mdb_to_jpg
-from src.utils import imshow
 
 class SRDataset(Dataset):
     def __init__(self, images, crop=True, normalize=True): 
