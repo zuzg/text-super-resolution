@@ -14,7 +14,7 @@ import neptune.new as neptune
 
 from src.models.srresnet import _NetG, _NetD
 from src.cfg import read_config
-from src.utils import evaluate_model
+from src.utils import evaluate_model, get_exemplary_images
 from src.data import SRDataset
 
 
@@ -118,6 +118,9 @@ def sr_gan_perform_training(train_set: SRDataset, cfg: dict, generative_model=_N
                 for mode in avg_psnr.keys():
                     run[f"eval/{mode}/psnr_avg"].append(avg_psnr[mode])
                     run[f"eval/{mode}/ssim_avg"].append(avg_ssim[mode])
+                    if epoch%10 == 0:
+                        plt_fig = get_exemplary_images(generative_model, test_set[mode], device, title=f'{mode.title()} test set [EPOCH {epoch}]')
+                        run[f"eval/{mode}/images"].append(plt_fig)
     if NEPTUNE:
         run.stop()
     if save is not None:
