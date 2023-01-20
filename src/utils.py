@@ -29,7 +29,34 @@ def display_img_tensor(img:torch.tensor, rescale=False):
     plt.imshow(np.clip(img_plt, 0, 1))
 
 
-def get_prediction(LR_image:torch.tensor, model, display:bool=True) -> torch.tensor:
+def display_tensors(images_lists:list[tuple[torch.tensor]], title_list:list=None, figsize=(15,5)):
+    rows = len(images_lists)
+    columns = len(images_lists[0])
+    fig = plt.figure(figsize=figsize)
+    titles = ["LR image", "HR image"]
+
+    for i, images in enumerate(images_lists):
+        for j, image in enumerate(images):
+
+            if image.shape[1] == 32:
+                image = image.add(1).div(2)
+
+            image_np  = image.cpu().numpy()
+            img_plt = image_np.transpose(1,2,0)[:, :, ::-1]
+            fig.add_subplot(rows, columns, i*columns+j+1)
+            plt.grid(False)
+            plt.axis('off')
+            if j%columns >= 2:
+                if j%columns-2 >= len(title_list):
+                    plt.title("SR image")
+                else:
+                    plt.title(title_list[j%columns-2])
+            else:   
+                plt.title(titles[j%3])
+            plt.imshow(np.clip(img_plt, 0, 1))
+
+
+def get_prediction(LR_image:torch.tensor, model, display:bool=False) -> torch.tensor:
     LR_image = torch.unsqueeze(LR_image, dim=0)
     SR_image = model.forward(LR_image.float())
     SR_image = SR_image.detach()[0]
