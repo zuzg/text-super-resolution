@@ -73,6 +73,7 @@ class _NetD(nn.Module):
         self.features = nn.Sequential(
         
             nn.Conv2d(in_channels=3, out_channels=64, kernel_size=3, stride=1, bias=False),
+            nn.Dropout2d(p=0.05),
             nn.LeakyReLU(0.2, inplace=True),
 
             nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=2, padding=1, bias=False),            
