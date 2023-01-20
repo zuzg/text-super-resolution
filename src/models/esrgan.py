@@ -99,42 +99,34 @@ class NetD_E(nn.Module):
 
         self.features = nn.Sequential(
 
-            # input is (3) x 96 x 96
             nn.Conv2d(in_channels=3, out_channels=64,
                       kernel_size=3, stride=1, bias=False),
             nn.LeakyReLU(0.2, inplace=True),
 
-            # state size. (64) x 96 x 96
             nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3,
                       stride=2, padding=1, bias=False),
             nn.LeakyReLU(0.2, inplace=True),
 
-            # state size. (64) x 96 x 96
             nn.Conv2d(in_channels=64, out_channels=128,
                       kernel_size=3, stride=1, padding=1, bias=False),
             nn.LeakyReLU(0.2, inplace=True),
 
-            # state size. (64) x 48 x 48
             nn.Conv2d(in_channels=128, out_channels=128,
                       kernel_size=3, stride=2, padding=1, bias=False),
             nn.LeakyReLU(0.2, inplace=True),
 
-            # state size. (128) x 48 x 48
             nn.Conv2d(in_channels=128, out_channels=256,
                       kernel_size=3, stride=1, padding=1, bias=False),
             nn.LeakyReLU(0.2, inplace=True),
 
-            # state size. (256) x 24 x 24
             nn.Conv2d(in_channels=256, out_channels=256,
                       kernel_size=3, stride=2, padding=1, bias=False),
             nn.LeakyReLU(0.2, inplace=True),
 
-            # state size. (256) x 12 x 12
             nn.Conv2d(in_channels=256, out_channels=512,
                       kernel_size=3, stride=1, padding=1, bias=False),
             nn.LeakyReLU(0.2, inplace=True),
 
-            # state size. (512) x 12 x 12
             nn.Conv2d(in_channels=512, out_channels=512,
                       kernel_size=3, stride=2, padding=1, bias=False),
             nn.LeakyReLU(0.2, inplace=True),
@@ -151,11 +143,8 @@ class NetD_E(nn.Module):
 
     def forward(self, input):
         out = self.features(input)
-        # state size. (512) x 6 x 6
         out = out.view(out.size(0), -1)
-        # state size. (512 x 6 x 6)
         out = self.fc1(out)
-        # state size. (1024)
         out = self.LeakyReLU(out)
         out = self.fc2(out)
         out.view(-1, 1).squeeze(1)

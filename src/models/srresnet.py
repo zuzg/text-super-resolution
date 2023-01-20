@@ -53,20 +53,13 @@ class _NetG(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x):
-        # print(x.shape)
         out = self.relu(self.conv_input(x))
-        # print(out.shape)
         residual = out
         out = self.residual(out)
-        # print(out.shape)
         out = self.bn_mid(self.conv_mid(out))
-        # print(out.shape)
         out = torch.add(out,residual)
-        # print(out.shape)
         out = self.upscale4x(out)
-        # print(out.shape)
         out = self.conv_output(out)
-        # print(out.shape)
         return out
 
 # add dropout to generator
@@ -79,41 +72,33 @@ class _NetD(nn.Module):
 
         self.features = nn.Sequential(
         
-            # input is (3) x 96 x 96
             nn.Conv2d(in_channels=3, out_channels=64, kernel_size=3, stride=1, bias=False),
             nn.LeakyReLU(0.2, inplace=True),
 
-            # state size. (64) x 96 x 96
             nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=2, padding=1, bias=False),            
             nn.BatchNorm2d(64),
             nn.LeakyReLU(0.2, inplace=True),
 
-            # state size. (64) x 96 x 96
             nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3, stride=1, padding=1, bias=False),            
             nn.BatchNorm2d(128),
             nn.LeakyReLU(0.2, inplace=True),
             
-            # state size. (64) x 48 x 48
             nn.Conv2d(in_channels=128, out_channels=128, kernel_size=3, stride=2, padding=1, bias=False),
             nn.BatchNorm2d(128),
             nn.LeakyReLU(0.2, inplace=True),
 
-            # state size. (128) x 48 x 48
             nn.Conv2d(in_channels=128, out_channels=256, kernel_size=3, stride=1, padding=1, bias=False),
             nn.BatchNorm2d(256),
             nn.LeakyReLU(0.2, inplace=True),
 
-            # state size. (256) x 24 x 24
             nn.Conv2d(in_channels=256, out_channels=256, kernel_size=3, stride=2, padding=1, bias=False),
             nn.BatchNorm2d(256),
             nn.LeakyReLU(0.2, inplace=True),
 
-            # state size. (256) x 12 x 12
             nn.Conv2d(in_channels=256, out_channels=512, kernel_size=3, stride=1, padding=1, bias=False),            
             nn.BatchNorm2d(512),
             nn.LeakyReLU(0.2, inplace=True),
 
-            # state size. (512) x 12 x 12
             nn.Conv2d(in_channels=512, out_channels=512, kernel_size=3, stride=2, padding=1, bias=False),            
             nn.BatchNorm2d(512),
             nn.LeakyReLU(0.2, inplace=True),
@@ -123,9 +108,7 @@ class _NetD(nn.Module):
         self.fc1 = nn.Linear(512 * 2 * 8, 1024)
         self.LeakyReLU = nn.LeakyReLU(0.2, inplace=True)
         self.fc2 = nn.Linear(1024, 1)
-        # self.sigmoid = nn.Sigmoid()
 
-        # what does it exactly do?
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 m.weight.data.normal_(0.0, 0.02)
@@ -134,22 +117,10 @@ class _NetD(nn.Module):
                 m.bias.data.fill_(0)
 
     def forward(self, input):
-        # print(input.shape)
         out = self.features(input)
-        # print(out.shape)
-        # state size. (512) x 6 x 6
         out = out.view(out.size(0), -1)
-        # print(out.shape)
-        # state size. (512 x 6 x 6)
         out = self.fc1(out)
-        # print(out.shape)
-        # state size. (1024)
         out = self.LeakyReLU(out)
-        # print(out.shape)
         out = self.fc2(out)
-        # print(out.shape)
-        # out = self.sigmoid(out)
-        # print(out.shape)
         out.view(-1, 1).squeeze(1)
-        # print(out.shape)
         return out
