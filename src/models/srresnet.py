@@ -36,7 +36,7 @@ class _NetG(nn.Module):
             nn.PixelShuffle(2),
             nn.LeakyReLU(0.2, inplace=True),
         )
-
+        self.dropout = nn.Dropout2d(p=0.05)
         self.conv_output = nn.Conv2d(in_channels=64, out_channels=3, kernel_size=9, stride=1, padding=4, bias=False)
         
         for m in self.modules():
@@ -59,10 +59,9 @@ class _NetG(nn.Module):
         out = self.bn_mid(self.conv_mid(out))
         out = torch.add(out,residual)
         out = self.upscale4x(out)
+        out = self.dropout(out)
         out = self.conv_output(out)
         return out
-
-# add dropout to generator
 
 # COMPARED TO THE PAPER - for some reason sometimes the kernel size was set to 4 
 # but in the paper all kernel_size = 3 so I changed that
@@ -73,7 +72,6 @@ class _NetD(nn.Module):
         self.features = nn.Sequential(
         
             nn.Conv2d(in_channels=3, out_channels=64, kernel_size=3, stride=1, bias=False),
-            nn.Dropout2d(p=0.05),
             nn.LeakyReLU(0.2, inplace=True),
 
             nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=2, padding=1, bias=False),            
