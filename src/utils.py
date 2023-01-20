@@ -60,6 +60,7 @@ def display_tensors(images_lists:list[tuple[torch.tensor]], title_list:list=None
         fig.suptitle(suptitle, fontsize=20)
     if not display:
         plt.close(fig)
+    fig.patch.set_facecolor('white')
     return fig
 
 def get_prediction(LR_image:torch.tensor, model, display:bool=False) -> torch.tensor:
