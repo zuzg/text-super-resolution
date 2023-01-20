@@ -118,6 +118,8 @@ def sr_resnet_perform_training(train_set: SRDataset, cfg: dict, generative_model
                     if epoch%10 == 0:
                         plt_fig = get_exemplary_images(generative_model, test_set[mode], device, title=f'{mode.title()} test set [EPOCH {epoch}]')
                         run[f"eval/{mode}/images"].append(plt_fig)
+        if save is not None and epoch % 50 == 0:
+            save_checkpoint(generative_model, epoch, save, total_params)
     if NEPTUNE:
         run.stop()
     if save is not None:
