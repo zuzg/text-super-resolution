@@ -9,10 +9,15 @@
     * ESRGAN: https://arxiv.org/pdf/1809.00219.pdf
 
 ## How to use the notebook
-- Download the data first and paste it into `/data` directory
-- In order to use **neptune.ai** you need to provide your api token (paste your token in ./cfg/tokens/api_token.yaml file in the format `token: <your-api-token>`).
+1. Download the data first and paste it into `/data` directory
+2. In order to use **neptune.ai** you need to provide your api token (paste your token in ./cfg/tokens/api_token.yaml file in the format `token: <your-api-token>`).
+3. Prepare environment
+   - Install dependencies using `pip install requirements.txt` **or**
+   - Use Docker:
+       - `docker build -t <image-name> .`
+       - `docker run -p 8888:8888 <image-name>`
 
-1. Install dependencies using `pip install requirements.txt`
-2. Using Docker:
-    - `docker build -t <image-name> .`
-    - `docker run -p 8888:8888 <image-name>`
+## Runtime environment
+We trained our models with cuda, having two independent gpus available:
+- NVIDIA GeForce GTX 1060 6GB
+- MSI GeForce RTX 2080 Ti 11GB
