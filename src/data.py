@@ -37,6 +37,9 @@ class SRDataset(Dataset):
     def __getitem__(self, index):        
         image = self.images[index]         
         return self.preprocess_image(image)
+    
+    def extend(self, new_images):
+        self.images.extend(new_images)
 
 
 # NOTE: we assume _img_HR.jpg and _img_HR.jpg suffices
