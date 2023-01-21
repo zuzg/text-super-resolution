@@ -1,8 +1,18 @@
-# text-super-resolution
+# 📝 text-super-resolution
 ## Bibliography
-1. Dataset: https://paperswithcode.com/dataset/textzoom, https://github.com/JasonBoy1/TextZoom, https://arxiv.org/pdf/2005.03341v3.pdf
-2. Super-resolution: https://arxiv.org/pdf/2103.02368v1.pdf
-3. Models:
+1. TextZoom Dataset: https://paperswithcode.com/dataset/textzoom, https://github.com/JasonBoy1/TextZoom, https://arxiv.org/pdf/2005.03341v3.pdf
+2. NEOCR Dataset: http://www.iapr-tc11.org/dataset/NEOCR/neocr_metadata_doc.pdf
+3. Super-resolution: https://arxiv.org/pdf/2103.02368v1.pdf
+4. Models:
     * SRResNet: https://arxiv.org/pdf/1609.04802.pdf
     * Text Gestalt: https://arxiv.org/pdf/2112.08171v1.pdf, https://arxiv.org/pdf/1706.03762v5.pdf
     * ESRGAN: https://arxiv.org/pdf/1809.00219.pdf
+
+## How to use the notebook
+- Download the data first and paste it into `/data` directory
+- In order to use **neptune.ai** you need to provide your api token (paste your token in ./cfg/tokens/api_token.yaml file in the format `token: <your-api-token>`).
+
+1. Install dependencies using `pip install requirements.txt`
+2. Using Docker:
+    - `docker build -t <image-name> .`
+    - `docker run -p 8888:8888 <image-name>`
