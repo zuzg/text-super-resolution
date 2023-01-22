@@ -20,4 +20,4 @@
 ## Runtime environment
 We trained our models with cuda, having two independent gpus available:
 - NVIDIA GeForce GTX 1060 6GB
-- MSI GeForce RTX 2080 Ti 11GB
+- NVIDIA GeForce RTX 2080 Ti 11GB
