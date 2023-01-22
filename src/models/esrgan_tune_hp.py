@@ -121,7 +121,7 @@ def train(generator, discriminator,
 
 def tune_hp(n_trials=10):
     study = optuna.create_study(direction="maximize")
-    study.optimize(objective, n_trials=n_trials, show_progress_bar=True) # timeout=600, 
+    study.optimize(objective, n_trials=n_trials, show_progress_bar=True, gc_after_trial=True) # timeout=600, 
 
     pruned_trials = study.get_trials(deepcopy=False, states=[TrialState.PRUNED])
     complete_trials = study.get_trials(deepcopy=False, states=[TrialState.COMPLETE])
