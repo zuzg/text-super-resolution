@@ -6,7 +6,7 @@ import PIL
 import torch
 from torch.utils.data import Dataset
 import torchvision.transforms as transforms
-from src.mdb_to_jpg import mdb_to_jpg
+from mdb_to_jpg import mdb_to_jpg
 
 
 class SRDataset(Dataset):
