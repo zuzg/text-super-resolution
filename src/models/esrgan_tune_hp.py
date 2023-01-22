@@ -26,12 +26,12 @@ def objective(trial):
     beta = 0.01
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
-    generator = NetG_E() # option: use pretrained
+    generator = NetG_E()
     generator.to(device)
     discriminator = NetD_E()
     discriminator.to(device)
 
-    weights = torch.load('checkpoint/model_e.pth', map_location=torch.device(device))
+    weights = torch.load('checkpoint/model_egan.pth', map_location=torch.device(device))
     generator.load_state_dict(weights['model'].state_dict())
 
     train_set, test_set = get_train_test()

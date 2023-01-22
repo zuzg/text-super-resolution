@@ -77,7 +77,7 @@ def get_stats(HR_image:torch.tensor, SR_image:torch.tensor, data_range:int=2, di
     psnr_val = psnr(HR_image.cpu().numpy(), SR_image.cpu().numpy(), data_range=data_range)
     ssim_val = ssim(HR_image.cpu().numpy(), SR_image.cpu().numpy(), chanel_axis=0, data_range=data_range, win_size=3)
     if display:
-        print(f'PSNR :{psnr_val:.3f}\nSSIM: {ssim_val:.3f}')
+        print(f'PSNR: {psnr_val:.3f}\nSSIM: {ssim_val:.3f}')
     return psnr_val, ssim_val
 
 
