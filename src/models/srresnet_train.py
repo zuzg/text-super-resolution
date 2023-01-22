@@ -12,10 +12,10 @@ import torch.optim as optim
 from tqdm import tqdm
 import neptune.new as neptune
 
-from src.models.srresnet import _NetG
-from src.cfg import read_config
-from src.utils import evaluate_model, get_exemplary_images
-from src.data import SRDataset
+from models.srresnet import _NetG
+from cfg import read_config
+from utils import evaluate_model, get_exemplary_images
+from data import SRDataset
 
 
 def sr_resnet_perform_training(train_set: SRDataset, cfg: dict, generative_model=_NetG(),

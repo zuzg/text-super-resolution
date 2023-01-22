@@ -1,6 +1,4 @@
 import sys
-if '../' not in sys.path:
-    sys.path.append('../')
 import torch
 import torch.nn as nn
 import torch.utils.model_zoo as model_zoo
@@ -10,9 +8,9 @@ import torch.optim as optim
 import optuna
 from optuna.trial import TrialState
 
-from src.utils import evaluate_model
-from src.data import get_train_test
-from src.models.esrgan import NetG_E, NetD_E
+from utils import evaluate_model
+from data import get_train_test
+from models.esrgan import NetG_E, NetD_E
 
 
 def objective(trial):

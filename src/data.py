@@ -8,6 +8,7 @@ from torch.utils.data import Dataset
 import torchvision.transforms as transforms
 from src.mdb_to_jpg import mdb_to_jpg
 
+
 class SRDataset(Dataset):
     def __init__(self, images, crop=True, normalize=True): 
         self.normalize = normalize
@@ -92,6 +93,7 @@ def get_height_width_distribution(shapes_list: list[tuple[int]]):
     axs[1].hist(width_list, color='deeppink')
     axs[1].set_title("Images width distribution")
     plt.show()
+
 
 def transform_(path):
     img = PIL.Image.open(path)

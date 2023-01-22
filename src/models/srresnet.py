@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import math
 
+
 class _Residual_Block(nn.Module):
     def __init__(self):
         super(_Residual_Block, self).__init__()

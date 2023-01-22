@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import torch
 from skimage.metrics import peak_signal_noise_ratio as psnr
 from skimage.metrics import structural_similarity as ssim
-from src.data import SRDataset
+from data import SRDataset
 
 
 def imshow(a: np.ndarray):
@@ -62,6 +62,7 @@ def display_tensors(images_lists:list[tuple[torch.tensor]], title_list:list=None
         plt.close(fig)
     fig.patch.set_facecolor('white')
     return fig
+
 
 def get_prediction(LR_image:torch.tensor, model, display:bool=False) -> torch.tensor:
     LR_image = torch.unsqueeze(LR_image, dim=0)

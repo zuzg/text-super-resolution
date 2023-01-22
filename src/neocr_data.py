@@ -3,7 +3,8 @@ from bs4 import BeautifulSoup
 import glob
 import random
 import numpy as np
-from src.utils import imshow
+from utils import imshow
+
 
 def get_text_points_list(path:str) -> list[tuple]:
     with open(path, 'r', encoding="utf8") as f:
@@ -52,6 +53,7 @@ def get_text_images_from_img(img_path:str, xml_path:str, display:bool=False) -> 
             imshow(image_cropped_LR)
         images.append((image_cropped_LR,image_cropped))
     return images
+
 
 def get_neocr_images(n:int=None, shuffle:bool=False) -> list[tuple[np.ndarray]]:    
     images = list()

@@ -11,8 +11,8 @@
 ## How to use the notebook
 1. Download the data first and paste it into `/data` directory
 2. In order to use **neptune.ai** you need to provide your api token (paste your token in ./cfg/tokens/api_token.yaml file in the format `token: <your-api-token>`).
-3. Prepare environment
-   - Install dependencies using `pip install requirements.txt` **or**
+3. Prepare environment using one of two options:
+   - Install dependencies using `pip install requirements.txt` and set `PYTHONPATH=src`
    - Use Docker:
        - `docker build -t <image-name> .`
        - `docker run -p 8888:8888 <image-name>`

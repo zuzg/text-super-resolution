@@ -1,7 +1,5 @@
 import os
 import sys
-if '../' not in sys.path:
-    sys.path.append('../')
 import torch
 import torch.nn as nn
 import torch.backends.cudnn as cudnn
@@ -12,10 +10,10 @@ import torch.optim as optim
 from tqdm import tqdm
 import neptune.new as neptune
 
-from src.models.srresnet import _NetG, _NetD
-from src.cfg import read_config
-from src.utils import evaluate_model, get_exemplary_images
-from src.data import SRDataset
+from models.srresnet import _NetG, _NetD
+from cfg import read_config
+from utils import evaluate_model, get_exemplary_images
+from data import SRDataset
 
 
 def sr_gan_perform_training(train_set: SRDataset, cfg: dict, generative_model=_NetG(),
