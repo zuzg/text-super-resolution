@@ -44,12 +44,12 @@ class RRDB(nn.Module):
 
 
 class NetG_E(nn.Module):
-    def __init__(self):
+    def __init__(self, p=0.05):
         super(NetG_E, self).__init__()
 
         self.conv_input = nn.Conv2d(
             in_channels=3, out_channels=64, kernel_size=9, stride=1, padding=4, bias=False)
-        self.dropout = nn.Dropout2d(p=0.05)
+        self.dropout = nn.Dropout2d(p=p)
         self.relu = nn.LeakyReLU(0.2, inplace=True)
 
         self.residual = self.make_layer(RRDB, 16)

@@ -14,22 +14,21 @@ from models.esrgan import NetG_E, NetD_E
 
 
 def objective(trial):
-    batch_size = trial.suggest_int("batch_size", 8, 32, step=8)
+    batch_size = 16
     epochs = 10
-    lr = trial.suggest_float("lr", 1e-5, 1e-1, log=True)
     step_lr = 200
     threads = 0
-    momentum = trial.suggest_uniform("momentum", 0.1, 0.9)
+    lr = trial.suggest_categorical("lr", [1e-6, 1e-5, 1e-4, 1e-3, 1e-2])
+    momentum = trial.suggest_float("momentum", 0.0, 0.5, step=0.1)
+    dropout_rate = trial.suggest_float("dropout_rate", 0.0, 0.5, step=0.1)
 
     global VGGmodel, step, device, beta
     step = step_lr
     beta = 0.01
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
-    generator = NetG_E()
-    generator.to(device)
+    generator = NetG_E(dropout_rate)
     discriminator = NetD_E()
-    discriminator.to(device)
 
     weights = torch.load('checkpoint/model_egan.pth', map_location=torch.device(device))
     generator.load_state_dict(weights['model'].state_dict())
