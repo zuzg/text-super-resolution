@@ -1,4 +1,16 @@
 # 📝 text-super-resolution
+## Done
+ - Problem: 3
+ - Model: 1+2+1
+ - Model additional: 1+1
+ - Dataset: 1+1
+ - HP tuning: 1
+ - Few optimizers: 1
+ - Various loss functions: 1
+ - Neptune: 1
+ - Docker: 1
+
+**Sum: 16**
 ## Bibliography
 1. TextZoom Dataset: https://paperswithcode.com/dataset/textzoom, https://github.com/JasonBoy1/TextZoom, https://arxiv.org/pdf/2005.03341v3.pdf
 2. NEOCR Dataset: http://www.iapr-tc11.org/dataset/NEOCR/neocr_metadata_doc.pdf
